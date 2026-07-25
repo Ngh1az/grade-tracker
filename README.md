@@ -6,11 +6,6 @@
 - **Grafana**: https://grafana.nghiatech.click (dashboard "Grade Tracker — Server & App")
 - **Stack**: React (Vite) + Node.js/Express + MongoDB + Nginx + PM2 + GitHub Actions + Prometheus/Grafana/Alertmanager
 
-VPS này đã chạy vài lab trước (go-shop, MERN deploy lab). Grade Tracker deploy song song, tái dùng
-Prometheus/Grafana/Alertmanager/node-exporter đã có sẵn (thêm scrape job + alert rule + dashboard riêng)
-thay vì dựng stack mới — VPS chỉ có ~1GB RAM. Các lab không dùng nữa (WebShopServer, demo-api, go-shop)
-đã được dừng để giải phóng RAM/port cho lab này.
-
 ## Kiến trúc
 
 ```
@@ -181,15 +176,31 @@ và tạo thêm user cho app đó hoặc dừng nó trước khi bật auth.
 ### 3. Firewall
 
 ```bash
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
 sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
+# QUAN TRỌNG nếu dùng Prometheus/Grafana chạy container (docker/podman): container nằm trong
+# network namespace riêng, DNS nội bộ (aardvark-dns/embedded DNS) và traffic tới app trên host
+# đều đi qua bridge network — ufw default-deny sẽ chặn luôn cả 2 nếu không allow subnet này.
+# Lấy subnet đúng bằng: podman network inspect <tên network> hoặc docker network inspect.
+sudo ufw allow from 10.89.0.0/24
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
 sudo ufw enable
 ```
 
-Các cổng 5000, 27017, 3001, 9090, 9093, 9100 đều bind `127.0.0.1` — không cần mở, không tiếp cận được từ ngoài.
+Kiểm chứng sau khi enable — từ trong container Prometheus phải resolve và reach được node-exporter
+và app qua bridge:
+```bash
+podman exec prometheus wget -qO- http://node-exporter:9100/metrics | head -3
+podman exec prometheus wget -qO- http://host.docker.internal:5000/api/health
+```
+
+Các cổng 27017, 3001, 9090, 9093, 9100 bind `127.0.0.1` — không tiếp cận được từ ngoài. Port 5000
+(app) bind mọi interface vì Prometheus scrape từ network namespace riêng (container) không reach
+được loopback của host — nhưng ufw không mở port 5000 ra ngoài, chỉ Nginx (local) và Prometheus
+(qua bridge network nội bộ, `ufw allow from <subnet bridge podman>`) chạm được tới nó. Không port nào
+trong nhóm này mở public.
 
 ### 4. Thư mục app + biến môi trường
 

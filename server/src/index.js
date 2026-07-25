@@ -8,8 +8,10 @@ const PORT = process.env.PORT || 5000;
 
 async function start() {
   await connectDB();
-  createApp().listen(PORT, '127.0.0.1', () => {
-    console.log(`Server listening on 127.0.0.1:${PORT}`);
+  // Bind tất cả interface: Prometheus scrape từ network namespace riêng (container) không
+  // reach được loopback của host. Firewall (ufw) mới là chốt chặn truy cập ngoài, không phải bind address.
+  createApp().listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
   });
 }
 
