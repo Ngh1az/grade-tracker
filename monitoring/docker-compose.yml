@@ -1,0 +1,74 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+    # Chỉ nghe localhost — không lộ ra internet
+    ports:
+      - '127.0.0.1:9090:9090'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - '127.0.0.1:9093:9093'
+
+  # Bridge: Alertmanager webhook -> Discord (Discord không hiểu format của Alertmanager)
+  alertmanager-discord:
+    image: rogerrum/alertmanager-discord:1.0.4
+    container_name: alertmanager-discord
+    restart: unless-stopped
+    environment:
+      DISCORD_WEBHOOK: ${DISCORD_WEBHOOK_URL}
+    expose:
+      - '9094'
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker)($$|/)'
+    ports:
+      - '127.0.0.1:9100:9100'
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    # Nginx proxy vào đây; cổng 3000 không mở ra internet
+    ports:
+      - '127.0.0.1:3000:3000'
+
+volumes:
+  prometheus-data:
+  alertmanager-data:
+  grafana-data:

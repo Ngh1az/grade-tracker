@@ -1,0 +1,24 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: discord
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  # Nhắc lại mỗi 4h nếu sự cố chưa được xử lý
+  repeat_interval: 4h
+
+receivers:
+  - name: discord
+    webhook_configs:
+      # Bridge chuyển format Alertmanager -> Discord embed
+      - url: 'http://alertmanager-discord:9094'
+        # Gửi cả tin RESOLVED khi sự cố khắc phục
+        send_resolved: true
+
+inhibit_rules:
+  # App chết thì không cần báo thêm lỗi 5xx
+  - source_matchers: [alertname = 'AppDown']
+    target_matchers: [alertname = 'HighApiErrorRate']
+    equal: ['instance']
