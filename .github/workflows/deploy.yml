@@ -1,0 +1,167 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install server deps
+        working-directory: server
+        run: npm ci
+      # Test fail ở đây => job deploy không chạy => production giữ bản cũ
+      - name: Run unit tests
+        working-directory: server
+        run: npm test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build client
+        working-directory: client
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install server production deps
+        working-directory: server
+        run: npm ci --omit=dev
+
+      - name: Package artifact
+        run: |
+          mkdir -p artifact/client artifact/server
+          cp -r client/dist/. artifact/client/
+          cp -r server/src server/package.json server/package-lock.json server/ecosystem.config.cjs artifact/server/
+          cp -r server/node_modules artifact/server/node_modules
+          cp scripts/health-check.sh artifact/
+          tar -czf release.tar.gz -C artifact .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release.tar.gz
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.SSH_PORT || 22 }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload release to VPS
+        run: |
+          scp -P "${{ secrets.SSH_PORT || 22 }}" -i ~/.ssh/id_ed25519 \
+            release.tar.gz \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/tmp/release.tar.gz"
+
+      - name: Deploy, restart and health check
+        run: |
+          ssh -p "${{ secrets.SSH_PORT || 22 }}" -i ~/.ssh/id_ed25519 \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" 'bash -euo pipefail -s' <<'REMOTE'
+          APP_DIR=/var/www/grade-tracker-api
+          WEB_DIR=/var/www/grade-tracker
+          RELEASE_DIR=/tmp/release-unpacked
+          BACKUP_DIR=/var/backups/grade-tracker-releases
+
+          rm -rf "$RELEASE_DIR"
+          mkdir -p "$RELEASE_DIR"
+          tar -xzf /tmp/release.tar.gz -C "$RELEASE_DIR"
+
+          # Giữ bản hiện tại để rollback nếu health check fail
+          mkdir -p "$BACKUP_DIR"
+          rm -rf "$BACKUP_DIR/previous"
+          if [ -d "$APP_DIR" ]; then
+            cp -a "$APP_DIR" "$BACKUP_DIR/previous"
+          fi
+
+          # Deploy server (giữ nguyên file .env đang có trên VPS)
+          mkdir -p "$APP_DIR"
+          rsync -a --delete --exclude='.env' "$RELEASE_DIR/server/" "$APP_DIR/"
+
+          # Deploy client build
+          sudo rsync -a --delete "$RELEASE_DIR/client/" "$WEB_DIR/"
+
+          # Restart app — reload để hạn chế downtime, PM2 tự restart nếu crash
+          cd "$APP_DIR"
+          pm2 reload ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
+          pm2 save
+
+          # Health check: fail => rollback + exit 1 => workflow đỏ
+          chmod +x "$RELEASE_DIR/health-check.sh"
+          if ! "$RELEASE_DIR/health-check.sh" http://127.0.0.1:5000/api/health 10 3; then
+            echo "Health check failed — rolling back"
+            if [ -d "$BACKUP_DIR/previous" ]; then
+              rsync -a --delete --exclude='.env' "$BACKUP_DIR/previous/" "$APP_DIR/"
+              cd "$APP_DIR" && pm2 reload ecosystem.config.cjs --update-env
+            fi
+            exit 1
+          fi
+
+          echo "Deploy OK"
+          REMOTE
+
+      - name: Verify public HTTPS endpoint
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://${{ secrets.APP_DOMAIN }}/api/health")
+          echo "public health status: $code"
+          test "$code" = "200"
+
+  notify:
+    needs: [test, build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STATUS: ${{ needs.deploy.result }}
+          ACTOR: ${{ github.actor }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          SHORT_SHA="${COMMIT_SHA:0:7}"
+          if [ "$STATUS" = "success" ]; then
+            COLOR=3066993
+            TITLE="✅ Deploy thành công"
+            DESC=$(printf '**Repo:** %s\n**Người push:** %s\n**Commit:** `%s` %s\n**Health check:** OK' \
+              "$REPO" "$ACTOR" "$SHORT_SHA" "$COMMIT_MSG")
+          else
+            COLOR=15158332
+            TITLE="❌ Deploy thất bại"
+            DESC=$(printf '**Repo:** %s\n**Người push:** %s\n**Commit:** `%s` %s\n**Kết quả:** test=%s, build=%s, deploy=%s\n**Log:** %s' \
+              "$REPO" "$ACTOR" "$SHORT_SHA" "$COMMIT_MSG" \
+              "${{ needs.test.result }}" "${{ needs.build.result }}" "${{ needs.deploy.result }}" "$RUN_URL")
+          fi
+
+          jq -n --arg title "$TITLE" --arg desc "$DESC" --arg url "$RUN_URL" --argjson color "$COLOR" \
+            '{embeds: [{title: $title, description: $desc, url: $url, color: $color}]}' \
+            > payload.json
+
+          curl -sf -X POST -H 'Content-Type: application/json' -d @payload.json "$WEBHOOK"
