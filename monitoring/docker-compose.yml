@@ -1,3 +1,9 @@
+# Stack chuẩn để dựng Prometheus/Alertmanager/Grafana/node-exporter từ đầu trên VPS mới.
+# Trên VPS thật đang chạy Grade Tracker, VPS đã có sẵn stack này từ 1 lab trước (share
+# chung cho cả VPS) — nên không chạy lại compose này, mà chỉ thêm scrape job +
+# alert rule cho grade-tracker-api vào prometheus.yml/alert-rules.yml của stack có sẵn,
+# và thêm Nginx vhost (nginx/grafana.conf) để expose Grafana đó qua HTTPS.
+# File này vẫn giữ để tái lập toàn bộ hệ thống trên 1 VPS trống.
 services:
   prometheus:
     image: prom/prometheus:v2.54.1
@@ -20,21 +26,12 @@ services:
     image: prom/alertmanager:v0.27.0
     container_name: alertmanager
     restart: unless-stopped
+    # Alertmanager 0.27 hỗ trợ discord_configs có sẵn, không cần container bridge riêng.
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager-data:/alertmanager
     ports:
       - '127.0.0.1:9093:9093'
-
-  # Bridge: Alertmanager webhook -> Discord (Discord không hiểu format của Alertmanager)
-  alertmanager-discord:
-    image: rogerrum/alertmanager-discord:1.0.4
-    container_name: alertmanager-discord
-    restart: unless-stopped
-    environment:
-      DISCORD_WEBHOOK: ${DISCORD_WEBHOOK_URL}
-    expose:
-      - '9094'
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
@@ -64,9 +61,10 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
-    # Nginx proxy vào đây; cổng 3000 không mở ra internet
+    # Nginx proxy vào đây; cổng ngoài host tuỳ chọn, không mở ra internet.
+    # Trên VPS thật đang map 3001:3000 (3000 đã bị lab khác dùng) — xem nginx/grafana.conf.
     ports:
-      - '127.0.0.1:3000:3000'
+      - '127.0.0.1:3001:3000'
 
 volumes:
   prometheus-data:
