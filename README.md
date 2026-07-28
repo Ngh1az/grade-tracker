@@ -64,19 +64,32 @@ git push main → GitHub Actions
 ```
 .
 ├── client/                        React + Vite (build ra static)
-│   └── src/{App.jsx,api.js,index.css}
+│   └── src/
+│       ├── App.jsx                điều phối: chưa đăng nhập → chưa chọn bậc → app
+│       ├── AuthScreen.jsx         đăng nhập / đăng ký (có xác nhận mật khẩu)
+│       ├── PasswordInput.jsx      ô mật khẩu kèm nút hiện/ẩn
+│       ├── LevelPicker.jsx        chọn bậc phổ thông / đại học
+│       ├── SubjectsView.jsx       CRUD môn học, đổi theo bậc
+│       ├── BrandMark.jsx          logo SVG
+│       ├── api.js                 fetch + gắn Bearer token, ApiError có mã
+│       └── index.css              design system (token Linear)
 ├── server/                        Express API
 │   ├── src/
 │   │   ├── index.js               entrypoint: kết nối DB rồi listen
-│   │   ├── app.js                 express app, /api/health, /metrics
-│   │   ├── grade.js               logic GPA + validate (được unit test)
+│   │   ├── app.js                 express app, /api/health, /metrics, gắn router
+│   │   ├── grade.js               GPA + quy đổi thang 4 + validate theo bậc (unit test)
+│   │   ├── auth.js                bcrypt hash, ký/xác thực JWT (unit test)
 │   │   ├── metrics.js             prom-client counter + histogram
 │   │   ├── db.js                  kết nối MongoDB
-│   │   ├── models/Subject.js      Mongoose schema
-│   │   └── routes/subjects.js     5 endpoint CRUD
+│   │   ├── middleware/
+│   │   │   ├── requireAuth.js     đọc Bearer token → req.user, 401 nếu sai
+│   │   │   └── requireLevel.js    409 LEVEL_REQUIRED nếu chưa chọn bậc
+│   │   ├── models/{User.js,Subject.js}
+│   │   └── routes/{auth.js,subjects.js}
 │   ├── tests/
-│   │   ├── grade.test.js          unit test logic GPA + validate
-│   │   └── api.test.js            test HTTP: health, metrics, validate, 404
+│   │   ├── grade.test.js          GPA hai bậc, mốc quy đổi thang 4, validate
+│   │   ├── auth.test.js           hash/verify mật khẩu, ký/xác thực token
+│   │   └── api.test.js            health, metrics, chặn truy cập thiếu token, 404
 │   └── ecosystem.config.cjs       PM2 config
 ├── nginx/
 │   ├── grade-tracker.conf         app: reverse proxy + rate limit (certbot thêm SSL)
@@ -92,19 +105,50 @@ git push main → GitHub Actions
 └── RUNBOOK.md                     xử lý sự cố theo từng alert
 ```
 
+## Tài khoản và bậc học
+
+Mỗi người dùng đăng ký bằng email + mật khẩu (băm bcrypt, 10 vòng). Đăng nhập trả về JWT hạn 7
+ngày; client gửi kèm `Authorization: Bearer <token>`. Môn học gắn với `user` và **mọi truy vấn đều
+lọc theo chủ sở hữu** — tài khoản này không đọc/sửa/xoá được môn của tài khoản khác (trả 404, không
+phải 403, để không tiết lộ id đó có tồn tại). Đăng nhập sai email và sai mật khẩu trả về **cùng một
+thông báo**, tránh để lộ email nào đã đăng ký.
+
+Sau khi đăng nhập, người dùng chọn bậc học — vì hai hệ tính GPA khác nhau, con số GPA vô nghĩa nếu
+không biết đang ở bậc nào:
+
+| | Giáo dục phổ thông | Giáo dục đại học |
+|---|---|---|
+| Tín chỉ | không dùng | có, là trọng số |
+| Thang GPA | 10 | 4 (quy đổi từ thang 10) |
+| Cách tính | trung bình cộng điểm các môn | bình quân điểm thang 4 theo tín chỉ |
+| Nhãn từng môn | Giỏi · Khá · TB · Yếu · Kém | A · B+ · B · C+ · C · D+ · D · F |
+| Xếp loại | Giỏi ≥8 · Khá ≥6.5 · TB ≥5 · Yếu ≥3.5 · Kém | Xuất sắc ≥3.6 · Giỏi ≥3.2 · Khá ≥2.5 · TB ≥2 · Không đạt |
+
+Quy đổi thang 4 và mốc xếp loại bậc đại học theo Thông tư 08/2021. Bậc phổ thông ghi `credits: 1`
+cho mọi môn nên trọng số bằng nhau, và ẩn hẳn cột Tín chỉ ở form lẫn bảng.
+
 ## API
 
-| Method | Endpoint | Mô tả |
-|---|---|---|
-| GET | `/api/subjects` | Danh sách môn + GPA (trung bình theo tín chỉ) |
-| GET | `/api/subjects/:id` | Chi tiết 1 môn |
-| POST | `/api/subjects` | Tạo môn mới |
-| PUT | `/api/subjects/:id` | Sửa môn |
-| DELETE | `/api/subjects/:id` | Xoá môn |
-| GET | `/api/health` | 200 nếu DB kết nối, 503 nếu không |
-| GET | `/metrics` | Prometheus metrics (chặn từ internet qua Nginx) |
+| Method | Endpoint | Auth | Mô tả |
+|---|---|---|---|
+| POST | `/api/auth/register` | — | Đăng ký, trả token + user |
+| POST | `/api/auth/login` | — | Đăng nhập, trả token + user |
+| GET | `/api/auth/me` | Bearer | Thông tin user của token hiện tại |
+| PATCH | `/api/auth/level` | Bearer | Đặt `educationLevel` (`pho-thong` \| `dai-hoc`) |
+| GET | `/api/subjects` | Bearer | Danh sách môn của user + `gpa`, `gpaScale`, `classification` |
+| GET | `/api/subjects/:id` | Bearer | Chi tiết 1 môn |
+| POST | `/api/subjects` | Bearer | Tạo môn mới |
+| PUT | `/api/subjects/:id` | Bearer | Sửa môn |
+| DELETE | `/api/subjects/:id` | Bearer | Xoá môn |
+| GET | `/api/health` | — | 200 nếu DB kết nối, 503 nếu không |
+| GET | `/metrics` | — | Prometheus metrics (chặn từ internet qua Nginx) |
 
-Entity `Subject`: `name` (string), `credits` (1-10), `grade` (0-10), `semester` (string), `createdAt`.
+Nhóm `/api/subjects` trả **401** khi thiếu/sai token và **409** kèm `code: LEVEL_REQUIRED` khi user
+chưa chọn bậc học — client dùng mã 409 này để mở màn chọn bậc thay vì hiện bảng điểm rỗng.
+
+Entity `Subject`: `user` (ref User), `name` (string), `credits` (1-10, phổ thông luôn 1),
+`grade` (0-10, thang 10 ở cả hai bậc), `semester` (string), `createdAt`.
+Entity `User`: `email` (unique), `passwordHash`, `educationLevel` (`null` cho tới khi chọn).
 
 ## Chạy local
 
@@ -118,7 +162,7 @@ cd client && npm install && npm run dev
 
 Vite dev server proxy `/api` về `localhost:5000`. Cần MongoDB chạy local hoặc sửa `MONGO_URI` trong `server/.env`.
 
-Chạy test (12 test, không cần DB):
+Chạy test (75 test, không cần DB):
 ```bash
 cd server && npm test
 ```
@@ -213,7 +257,12 @@ Tạo `/var/www/grade-tracker-api/.env` (file này không bao giờ commit, depl
 ```
 PORT=5000
 MONGO_URI=mongodb://gradeapp:MẬT_KHẨU_MẠNH@127.0.0.1:27017/gradetracker?authSource=gradetracker
+JWT_SECRET=<chuỗi ngẫu nhiên dài>
 ```
+
+`JWT_SECRET` sinh bằng `openssl rand -base64 48`. App **không khởi động được** nếu thiếu biến này.
+Đổi secret sẽ vô hiệu toàn bộ phiên đang đăng nhập (mọi người phải đăng nhập lại) — đây cũng là cách
+thu hồi token nếu nghi bị lộ. Đặt quyền `chmod 600` cho file `.env`.
 
 ### 5. Nginx + HTTPS
 
@@ -339,3 +388,5 @@ pm2 start grade-tracker-api     # chờ ~1 phút (scrape lại thấy up) → Di
 - **SSH key-only** — deploy dùng key ed25519, khuyến nghị tắt `PasswordAuthentication` trong `sshd_config`
 - **Dashboard nghiệp vụ** — panel request/s theo route, latency p50/p95, request theo status code
 - **Runbook** — hướng dẫn xử lý từng alert kèm lệnh cụ thể
+- **Xác thực + dữ liệu riêng theo tài khoản** — JWT, mật khẩu băm bcrypt, mọi truy vấn môn học lọc
+  theo chủ sở hữu; thông báo đăng nhập sai không tiết lộ email nào tồn tại
