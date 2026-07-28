@@ -1,5 +1,31 @@
 import { useState } from 'react';
 import { createSubject, updateSubject, deleteSubject } from '../api.js';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const EMPTY_FORM = { name: '', credits: '', grade: '', semester: '', academicYear: '' };
 const YEAR_RE = /^\d{4}$/;
@@ -105,7 +131,6 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
   }
 
   async function handleDelete(subject) {
-    if (!window.confirm(`Xoá môn "${subject.name}"?`)) return;
     setError('');
     try {
       await deleteSubject(subject._id);
@@ -123,229 +148,222 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
       </div>
 
       {error && (
-        <div className="alert" role="alert">
-          <span>{error}</span>
-        </div>
+        <Alert variant="destructive" className="mb-3">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="card">
-        <div className="card-head">
-          <h2>{editingId ? 'Sửa môn học' : 'Thêm môn học'}</h2>
-          {editingId && <span className="status-badge">đang sửa</span>}
-        </div>
-        <div className={`fields${usesCredits ? '' : ' no-credits'}`}>
-          <label>
-            TÊN MÔN
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder={usesCredits ? 'Lập trình Web' : 'Toán'}
-              className={formErrors.name ? 'has-error' : ''}
-            />
-            {formErrors.name && <span className="field-error">{formErrors.name}</span>}
-          </label>
-          {usesCredits && (
-            <label>
-              TÍN CHỈ
-              <input
-                type="number"
-                min="1"
-                max="10"
-                value={form.credits}
-                onChange={(e) => setForm({ ...form, credits: e.target.value })}
-                placeholder="3"
-                className={formErrors.credits ? 'has-error' : ''}
-              />
-              {formErrors.credits && <span className="field-error">{formErrors.credits}</span>}
-            </label>
-          )}
-          <label>
-            ĐIỂM (THANG 10)
-            <input
-              type="number"
-              min="0"
-              max="10"
-              step="0.1"
-              value={form.grade}
-              onChange={(e) => setForm({ ...form, grade: e.target.value })}
-              placeholder="8.5"
-              className={formErrors.grade ? 'has-error' : ''}
-            />
-            {formErrors.grade && <span className="field-error">{formErrors.grade}</span>}
-          </label>
-          <label>
-            HỌC KỲ
-            {usesCredits ? (
-              <select
-                value={form.semester}
-                onChange={(e) => setForm({ ...form, semester: e.target.value })}
-                className={formErrors.semester ? 'has-error' : ''}
-              >
-                <option value="" disabled>
-                  -- Chọn học kỳ --
-                </option>
-                {SEMESTER_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                value={form.semester}
-                onChange={(e) => setForm({ ...form, semester: e.target.value })}
-                placeholder="HK1-2026"
-                className={formErrors.semester ? 'has-error' : ''}
-              />
+      <form onSubmit={handleSubmit}>
+        <Card className="mb-3 border-border ring-0">
+          <CardHeader>
+            <CardTitle>{editingId ? 'Sửa môn học' : 'Thêm môn học'}</CardTitle>
+            {editingId && (
+              <CardAction>
+                <Badge variant="secondary">đang sửa</Badge>
+              </CardAction>
             )}
-            {formErrors.semester && <span className="field-error">{formErrors.semester}</span>}
-          </label>
-          {usesCredits && (
-            <label>
-              NĂM HỌC
-              <select
-                value={form.academicYear}
-                onChange={(e) => setForm({ ...form, academicYear: e.target.value })}
-                className={formErrors.academicYear ? 'has-error' : ''}
-              >
-                <option value="" disabled>
-                  -- Chọn năm học --
-                </option>
-                {academicYearOptions().map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-              {formErrors.academicYear && (
-                <span className="field-error">{formErrors.academicYear}</span>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className={`fields${usesCredits ? '' : ' no-credits'}`}>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="subject-name">TÊN MÔN</Label>
+                <Input
+                  id="subject-name"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder={usesCredits ? 'Lập trình Web' : 'Toán'}
+                  aria-invalid={formErrors.name ? true : undefined}
+                />
+                {formErrors.name && <span className="field-error">{formErrors.name}</span>}
+              </div>
+              {usesCredits && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="subject-credits">TÍN CHỈ</Label>
+                  <Input
+                    id="subject-credits"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={form.credits}
+                    onChange={(e) => setForm({ ...form, credits: e.target.value })}
+                    placeholder="3"
+                    aria-invalid={formErrors.credits ? true : undefined}
+                  />
+                  {formErrors.credits && <span className="field-error">{formErrors.credits}</span>}
+                </div>
               )}
-            </label>
-          )}
-        </div>
-        <div className="actions">
-          <button type="submit" disabled={saving}>
-            {saving ? 'Đang lưu…' : editingId ? 'Cập nhật' : 'Thêm môn học'}
-          </button>
-          {editingId && (
-            <button type="button" onClick={resetForm} className="secondary">
-              Huỷ
-            </button>
-          )}
-        </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="subject-grade">ĐIỂM (THANG 10)</Label>
+                <Input
+                  id="subject-grade"
+                  type="number"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  value={form.grade}
+                  onChange={(e) => setForm({ ...form, grade: e.target.value })}
+                  placeholder="8.5"
+                  aria-invalid={formErrors.grade ? true : undefined}
+                />
+                {formErrors.grade && <span className="field-error">{formErrors.grade}</span>}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="subject-semester">HỌC KỲ</Label>
+                {usesCredits ? (
+                  <Select
+                    value={form.semester}
+                    onValueChange={(v) => setForm({ ...form, semester: v })}
+                  >
+                    <SelectTrigger id="subject-semester" className="w-full" aria-invalid={formErrors.semester ? true : undefined}>
+                      <SelectValue placeholder="-- Chọn học kỳ --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SEMESTER_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id="subject-semester"
+                    value={form.semester}
+                    onChange={(e) => setForm({ ...form, semester: e.target.value })}
+                    placeholder="HK1-2026"
+                    aria-invalid={formErrors.semester ? true : undefined}
+                  />
+                )}
+                {formErrors.semester && <span className="field-error">{formErrors.semester}</span>}
+              </div>
+              {usesCredits && (
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="subject-year">NĂM HỌC</Label>
+                  <Select
+                    value={form.academicYear}
+                    onValueChange={(v) => setForm({ ...form, academicYear: v })}
+                  >
+                    <SelectTrigger id="subject-year" className="w-full" aria-invalid={formErrors.academicYear ? true : undefined}>
+                      <SelectValue placeholder="-- Chọn năm học --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {academicYearOptions().map((y) => (
+                        <SelectItem key={y} value={y}>
+                          {y}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.academicYear && (
+                    <span className="field-error">{formErrors.academicYear}</span>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={saving}>
+                {saving ? 'Đang lưu…' : editingId ? 'Cập nhật' : 'Thêm môn học'}
+              </Button>
+              {editingId && (
+                <Button type="button" variant="secondary" onClick={resetForm}>
+                  Huỷ
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </form>
 
-      <section className="card">
-        <div className="card-head">
-          <h2>Danh sách môn học</h2>
+      <Card className="border-border ring-0">
+        <CardHeader>
+          <CardTitle>Danh sách môn học</CardTitle>
           {!loading && subjects.length > 0 && (
-            <span className="status-badge">{subjects.length} môn</span>
+            <CardAction>
+              <Badge variant="secondary">{subjects.length} môn</Badge>
+            </CardAction>
           )}
-        </div>
-
-        {loading ? (
-          <div aria-live="polite" aria-busy="true">
-            <span className="skeleton" style={{ width: '100%' }} />
-            <span className="skeleton" style={{ width: '88%' }} />
-            <span className="skeleton" style={{ width: '94%' }} />
-            <span className="skeleton" style={{ width: '76%' }} />
-          </div>
-        ) : subjects.length === 0 ? (
-          <div className="empty">
-            <p>Chưa có môn học nào.</p>
-            <p>Thêm môn đầu tiên bằng biểu mẫu ở trên.</p>
-          </div>
-        ) : usesCredits ? (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>TÊN MÔN</th>
-                  <th>SỐ TÍN</th>
-                  <th>ĐIỂM HỆ 10</th>
-                  <th>ĐIỂM HỆ 4</th>
-                  <th>ĐIỂM CHỮ</th>
-                  <th>XẾP LOẠI</th>
-                  <th>HỌC KỲ</th>
-                  <th>NĂM HỌC</th>
-                  <th aria-label="Hành động" />
-                </tr>
-              </thead>
-              <tbody>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex flex-col gap-3" aria-live="polite" aria-busy="true">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-[88%]" />
+              <Skeleton className="h-4 w-[94%]" />
+              <Skeleton className="h-4 w-[76%]" />
+            </div>
+          ) : subjects.length === 0 ? (
+            <div className="empty">
+              <p>Chưa có môn học nào.</p>
+              <p>Thêm môn đầu tiên bằng biểu mẫu ở trên.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>TÊN MÔN</TableHead>
+                  {usesCredits && <TableHead>SỐ TÍN</TableHead>}
+                  <TableHead>{usesCredits ? 'ĐIỂM HỆ 10' : 'ĐIỂM'}</TableHead>
+                  {usesCredits && <TableHead>ĐIỂM HỆ 4</TableHead>}
+                  {usesCredits && <TableHead>ĐIỂM CHỮ</TableHead>}
+                  {usesCredits && <TableHead>XẾP LOẠI</TableHead>}
+                  <TableHead>HỌC KỲ</TableHead>
+                  {usesCredits && <TableHead>NĂM HỌC</TableHead>}
+                  <TableHead className="text-right">Hành động</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {subjects.map((s) => (
-                  <tr key={s._id} className={editingId === s._id ? 'is-editing' : ''}>
-                    <td className="name">{s.name}</td>
-                    <td className="num">{s.credits}</td>
-                    <td className="num grade-num">{s.grade.toFixed(1)}</td>
-                    <td className="num grade-num">{s.grade4.toFixed(1)}</td>
-                    <td>
-                      <span className="grade">
-                        <span className={`grade-dot ${gradeLevel(s.grade)}`} aria-hidden="true" />
-                        <span className="grade-letter">{s.letter}</span>
-                      </span>
-                    </td>
-                    <td className="sem">{s.rank}</td>
-                    <td className="sem">{s.semester}</td>
-                    <td className="sem">{s.academicYear || '—'}</td>
-                    <td className="row-actions">
-                      <button type="button" className="ghost" onClick={() => handleEdit(s)}>
-                        Sửa
-                      </button>
-                      <button
-                        type="button"
-                        className="ghost destructive"
-                        onClick={() => handleDelete(s)}
-                      >
-                        Xoá
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>TÊN MÔN</th>
-                  <th>ĐIỂM</th>
-                  <th>HỌC KỲ</th>
-                  <th aria-label="Hành động" />
-                </tr>
-              </thead>
-              <tbody>
-                {subjects.map((s) => (
-                  <tr key={s._id} className={editingId === s._id ? 'is-editing' : ''}>
-                    <td className="name">{s.name}</td>
-                    <td>
+                  <TableRow key={s._id} className={editingId === s._id ? 'is-editing' : ''}>
+                    <TableCell className="name font-medium text-foreground">{s.name}</TableCell>
+                    {usesCredits && <TableCell className="num">{s.credits}</TableCell>}
+                    <TableCell>
                       <span className="grade">
                         <span className={`grade-dot ${gradeLevel(s.grade)}`} aria-hidden="true" />
                         <span className="grade-num">{s.grade.toFixed(1)}</span>
-                        <span className="grade-letter">{s.label}</span>
+                        {!usesCredits && <span className="grade-letter">{s.label}</span>}
                       </span>
-                    </td>
-                    <td className="sem">{s.semester}</td>
-                    <td className="row-actions">
-                      <button type="button" className="ghost" onClick={() => handleEdit(s)}>
-                        Sửa
-                      </button>
-                      <button
-                        type="button"
-                        className="ghost destructive"
-                        onClick={() => handleDelete(s)}
-                      >
-                        Xoá
-                      </button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    {usesCredits && <TableCell className="num grade-num">{s.grade4.toFixed(1)}</TableCell>}
+                    {usesCredits && <TableCell className="grade-letter">{s.letter}</TableCell>}
+                    {usesCredits && <TableCell className="sem">{s.rank}</TableCell>}
+                    <TableCell className="sem">{s.semester}</TableCell>
+                    {usesCredits && <TableCell className="sem">{s.academicYear || '—'}</TableCell>}
+                    <TableCell className="text-right">
+                      <div className="row-actions">
+                        <Button type="button" variant="ghost" size="sm" onClick={() => handleEdit(s)}>
+                          Sửa
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger render={<Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" />}>
+                            Xoá
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Xoá môn "{s.name}"?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Không thể hoàn tác. Điểm và mọi dữ liệu liên quan tới môn này sẽ mất.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Huỷ</AlertDialogCancel>
+                              <AlertDialogAction
+                                variant="destructive"
+                                onClick={() => handleDelete(s)}
+                              >
+                                Xoá môn
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

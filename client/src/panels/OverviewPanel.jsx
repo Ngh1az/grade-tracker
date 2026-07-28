@@ -1,4 +1,8 @@
 import GpaTrendChart from './GpaTrendChart.jsx';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 /**
  * Nhãn của TỪNG MÔN (không phải xếp loại GPA): bậc đại học là điểm chữ,
@@ -34,10 +38,10 @@ export default function OverviewPanel({ data, level, loading, onGoSubjects }) {
       <div className="panel">
         <div className="stats">
           {[0, 1, 2].map((i) => (
-            <div className="stat" key={i}>
-              <span className="skeleton" style={{ width: '40%' }} />
-              <span className="skeleton" style={{ width: '60%', height: 28, marginTop: 14 }} />
-            </div>
+            <Card className="border-border p-4 ring-0" key={i}>
+              <Skeleton className="h-3 w-[40%]" />
+              <Skeleton className="mt-3.5 h-7 w-[60%]" />
+            </Card>
           ))}
         </div>
       </div>
@@ -51,109 +55,117 @@ export default function OverviewPanel({ data, level, loading, onGoSubjects }) {
       </div>
 
       <div className="stats">
-        <div className="stat">
+        <Card className="border-border p-4 ring-0">
           <span className="stat-label">GPA</span>
           <span className="stat-value">{gpa}</span>
           <span className="stat-hint">{classification}</span>
-        </div>
-        <div className="stat">
+        </Card>
+        <Card className="border-border p-4 ring-0">
           <span className="stat-label">Số môn</span>
           <span className="stat-value">{subjects.length}</span>
           <span className="stat-hint">{passed} môn đạt từ 4.0 trở lên</span>
-        </div>
+        </Card>
         {usesCredits ? (
-          <div className="stat">
+          <Card className="border-border p-4 ring-0">
             <span className="stat-label">Tín chỉ</span>
             <span className="stat-value">{totalCredits}</span>
             <span className="stat-hint">tổng đã tích luỹ</span>
-          </div>
+          </Card>
         ) : (
-          <div className="stat">
+          <Card className="border-border p-4 ring-0">
             <span className="stat-label">Học kỳ</span>
             <span className="stat-value">{semesters.length}</span>
             <span className="stat-hint">đã có điểm</span>
-          </div>
+          </Card>
         )}
-        <div className="stat">
+        <Card className="border-border p-4 ring-0">
           <span className="stat-label">Điểm cao nhất</span>
           <span className="stat-value">{best ? best.grade.toFixed(1) : '—'}</span>
           <span className="stat-hint">{best ? best.name : 'chưa có môn nào'}</span>
-        </div>
+        </Card>
       </div>
 
       {subjects.length === 0 ? (
-        <section className="card">
-          <div className="empty">
-            <p>Chưa có môn học nào.</p>
-            <p>Thêm môn đầu tiên để thấy GPA và xếp loại.</p>
-            <button type="button" className="secondary" onClick={onGoSubjects} style={{ marginTop: 14 }}>
-              Đi tới Môn học
-            </button>
-          </div>
-        </section>
+        <Card className="border-border ring-0">
+          <CardContent>
+            <div className="empty">
+              <p>Chưa có môn học nào.</p>
+              <p>Thêm môn đầu tiên để thấy GPA và xếp loại.</p>
+              <Button type="button" variant="secondary" onClick={onGoSubjects} className="mt-3.5">
+                Đi tới Môn học
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid-2">
-          <section className="card">
-            <div className="card-head">
-              <h2>Môn gần đây</h2>
-              <button type="button" className="ghost" onClick={onGoSubjects}>
-                Xem tất cả
-              </button>
-            </div>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>TÊN MÔN</th>
-                    <th>ĐIỂM</th>
-                    <th>HỌC KỲ</th>
-                  </tr>
-                </thead>
-                <tbody>
+          <Card className="border-border ring-0">
+            <CardHeader>
+              <CardTitle>Môn gần đây</CardTitle>
+              <CardAction>
+                <Button type="button" variant="ghost" size="sm" onClick={onGoSubjects}>
+                  Xem tất cả
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>TÊN MÔN</TableHead>
+                    <TableHead>ĐIỂM</TableHead>
+                    <TableHead>HỌC KỲ</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {subjects.slice(0, 5).map((s) => (
-                    <tr key={s._id}>
-                      <td className="name">{s.name}</td>
-                      <td>
+                    <TableRow key={s._id}>
+                      <TableCell className="name font-medium text-foreground">{s.name}</TableCell>
+                      <TableCell>
                         <span className="grade">
                           <span className={`grade-dot ${gradeLevel(s.grade)}`} aria-hidden="true" />
                           <span className="grade-num">{s.grade.toFixed(1)}</span>
                           <span className="grade-letter">{s.label}</span>
                         </span>
-                      </td>
-                      <td className="sem">{s.semester}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell className="sem">{s.semester}</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
 
-          <section className="card">
-            <div className="card-head">
-              <h2>{usesCredits ? 'Phân bố điểm chữ' : 'Phân bố học lực'}</h2>
-            </div>
-            <ul className="bars">
-              {distribution.map(({ rank, count }) => (
-                <li key={rank}>
-                  <span className="bar-label">{rank}</span>
-                  <span className="bar-track">
-                    <span className="bar-fill" style={{ width: `${(count / maxCount) * 100}%` }} />
-                  </span>
-                  <span className="bar-value">{count}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <Card className="border-border ring-0">
+            <CardHeader>
+              <CardTitle>{usesCredits ? 'Phân bố điểm chữ' : 'Phân bố học lực'}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <ul className="bars">
+                {distribution.map(({ rank, count }) => (
+                  <li key={rank}>
+                    <span className="bar-label">{rank}</span>
+                    <span className="bar-track">
+                      <span className="bar-fill" style={{ width: `${(count / maxCount) * 100}%` }} />
+                    </span>
+                    <span className="bar-value">{count}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       {semesters.length > 0 && (
-        <section className="card chart-card">
-          <div className="card-head">
-            <h2>GPA theo học kỳ</h2>
-          </div>
-          <GpaTrendChart semesters={semesters} scale={gpaScale} />
-        </section>
+        <Card className="chart-card border-border ring-0">
+          <CardHeader>
+            <CardTitle>GPA theo học kỳ</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <GpaTrendChart semesters={semesters} scale={gpaScale} />
+          </CardContent>
+        </Card>
       )}
     </div>
   );

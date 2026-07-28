@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { register, login, setToken } from './api.js';
 import BrandMark from './BrandMark.jsx';
 import PasswordInput from './PasswordInput.jsx';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const EMPTY = { email: '', password: '', confirm: '' };
 
@@ -54,94 +60,99 @@ export default function AuthScreen({ onAuthenticated }) {
   }
 
   return (
-    <div className="auth-shell">
-      <div className="auth-brand">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-8">
+      <div className="flex items-center gap-2 text-sm font-medium text-foreground">
         <BrandMark size={16} />
         Grade Tracker
       </div>
 
-      <form className="auth-card" onSubmit={handleSubmit} noValidate>
-        <div className="auth-card-head">
-          <h1>{isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}</h1>
-          <p>
-            {isRegister
-              ? 'Nhập email và mật khẩu để bắt đầu theo dõi điểm.'
-              : 'Nhập thông tin tài khoản để xem môn học và GPA.'}
-          </p>
-        </div>
+      <form onSubmit={handleSubmit} noValidate className="w-full max-w-sm">
+        <Card className="border-border ring-0" size="sm">
+          <CardHeader>
+            <CardTitle className="text-xl">{isRegister ? 'Tạo tài khoản' : 'Đăng nhập'}</CardTitle>
+            <CardDescription>
+              {isRegister
+                ? 'Nhập email và mật khẩu để bắt đầu theo dõi điểm.'
+                : 'Nhập thông tin tài khoản để xem môn học và GPA.'}
+            </CardDescription>
+          </CardHeader>
 
-        {error && (
-          <div className="alert" role="alert">
-            <span>{error}</span>
-          </div>
-        )}
-
-        <div className="form-field">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={form.email}
-            onChange={set('email')}
-            placeholder="sinhvien@example.com"
-            className={fieldErrors.email ? 'has-error' : ''}
-            aria-invalid={fieldErrors.email ? true : undefined}
-          />
-          {fieldErrors.email && (
-            <span className="field-error" role="alert">
-              {fieldErrors.email}
-            </span>
-          )}
-        </div>
-
-        <div className="form-field">
-          <label htmlFor="password">Mật khẩu</label>
-          <PasswordInput
-            id="password"
-            value={form.password}
-            onChange={set('password')}
-            placeholder={isRegister ? 'Tối thiểu 6 ký tự' : 'Mật khẩu của bạn'}
-            autoComplete={isRegister ? 'new-password' : 'current-password'}
-            invalid={Boolean(fieldErrors.password)}
-          />
-          {fieldErrors.password && (
-            <span className="field-error" role="alert">
-              {fieldErrors.password}
-            </span>
-          )}
-        </div>
-
-        {isRegister && (
-          <div className="form-field">
-            <label htmlFor="confirm">Nhập lại mật khẩu</label>
-            <PasswordInput
-              id="confirm"
-              value={form.confirm}
-              onChange={set('confirm')}
-              placeholder="Nhập lại mật khẩu"
-              autoComplete="new-password"
-              invalid={Boolean(fieldErrors.confirm)}
-            />
-            {fieldErrors.confirm && (
-              <span className="field-error" role="alert">
-                {fieldErrors.confirm}
-              </span>
+          <CardContent className="flex flex-col gap-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
-          </div>
-        )}
 
-        <button type="submit" className="block" disabled={busy}>
-          {busy ? 'Đang xử lý…' : isRegister ? 'Đăng ký' : 'Đăng nhập'}
-        </button>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={set('email')}
+                placeholder="sinhvien@example.com"
+                aria-invalid={fieldErrors.email ? true : undefined}
+              />
+              {fieldErrors.email && (
+                <span className="text-xs text-destructive" role="alert">
+                  {fieldErrors.email}
+                </span>
+              )}
+            </div>
 
-        <div className="auth-sep" role="separator">
-          <span>hoặc</span>
-        </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="password">Mật khẩu</Label>
+              <PasswordInput
+                id="password"
+                value={form.password}
+                onChange={set('password')}
+                placeholder={isRegister ? 'Tối thiểu 6 ký tự' : 'Mật khẩu của bạn'}
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+                invalid={Boolean(fieldErrors.password)}
+              />
+              {fieldErrors.password && (
+                <span className="text-xs text-destructive" role="alert">
+                  {fieldErrors.password}
+                </span>
+              )}
+            </div>
 
-        <button type="button" className="secondary block" onClick={switchMode}>
-          {isRegister ? 'Tôi đã có tài khoản' : 'Tạo tài khoản mới'}
-        </button>
+            {isRegister && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="confirm">Nhập lại mật khẩu</Label>
+                <PasswordInput
+                  id="confirm"
+                  value={form.confirm}
+                  onChange={set('confirm')}
+                  placeholder="Nhập lại mật khẩu"
+                  autoComplete="new-password"
+                  invalid={Boolean(fieldErrors.confirm)}
+                />
+                {fieldErrors.confirm && (
+                  <span className="text-xs text-destructive" role="alert">
+                    {fieldErrors.confirm}
+                  </span>
+                )}
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? 'Đang xử lý…' : isRegister ? 'Đăng ký' : 'Đăng nhập'}
+            </Button>
+
+            <div className="flex items-center gap-3 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <Separator className="flex-1" />
+              hoặc
+              <Separator className="flex-1" />
+            </div>
+
+            <Button type="button" variant="secondary" className="w-full" onClick={switchMode}>
+              {isRegister ? 'Tôi đã có tài khoản' : 'Tạo tài khoản mới'}
+            </Button>
+          </CardContent>
+        </Card>
       </form>
     </div>
   );

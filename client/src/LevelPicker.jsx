@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { setEducationLevel } from './api.js';
+import LevelOptionCard from './LevelOptionCard.jsx';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const OPTIONS = [
   {
@@ -38,52 +42,45 @@ export default function LevelPicker({ email, onPicked, onLogout }) {
   }
 
   return (
-    <div className="auth-shell">
-      <div className="level-card">
-        <h1>Chọn bậc học</h1>
-        <p className="subtitle">
-          Cách tính GPA và xếp loại khác nhau giữa hai bậc, nên cần chọn trước khi thêm môn.
-        </p>
+    <div className="flex min-h-screen items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-2xl border-border ring-0">
+        <CardHeader>
+          <CardTitle className="text-xl">Chọn bậc học</CardTitle>
+          <CardDescription>
+            Cách tính GPA và xếp loại khác nhau giữa hai bậc, nên cần chọn trước khi thêm môn.
+          </CardDescription>
+        </CardHeader>
 
-        {error && (
-          <div className="alert" role="alert">
-            <span>{error}</span>
+        <CardContent className="flex flex-col gap-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Bậc học">
+            {OPTIONS.map((opt) => (
+              <LevelOptionCard
+                key={opt.value}
+                title={opt.title}
+                detail={opt.detail}
+                lines={opt.lines}
+                selected={selected === opt.value}
+                onClick={() => setSelected(opt.value)}
+              />
+            ))}
           </div>
-        )}
 
-        <div className="level-options" role="radiogroup" aria-label="Bậc học">
-          {OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              role="radio"
-              aria-checked={selected === opt.value}
-              className={`level-option${selected === opt.value ? ' is-selected' : ''}`}
-              onClick={() => setSelected(opt.value)}
-            >
-              <span className="level-option-head">
-                <span className="radio" aria-hidden="true" />
-                <span className="level-title">{opt.title}</span>
-              </span>
-              <span className="level-detail">{opt.detail}</span>
-              <span className="level-lines">
-                {opt.lines.map((line) => (
-                  <span key={line}>{line}</span>
-                ))}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="actions">
-          <button type="button" onClick={confirm} disabled={!selected || busy}>
-            {busy ? 'Đang lưu…' : 'Tiếp tục'}
-          </button>
-          <button type="button" className="ghost" onClick={onLogout}>
-            Đăng xuất {email ? `(${email})` : ''}
-          </button>
-        </div>
-      </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button type="button" onClick={confirm} disabled={!selected || busy}>
+              {busy ? 'Đang lưu…' : 'Tiếp tục'}
+            </Button>
+            <Button type="button" variant="ghost" onClick={onLogout}>
+              Đăng xuất {email ? `(${email})` : ''}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

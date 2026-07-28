@@ -2,7 +2,7 @@
 // co theo tỉ lệ scale của viewBox: cùng 1 font-size khai báo sẽ hiện ~6-7px thật trên
 // điện thoại nhưng ~15px trên desktop, không cách nào giữ cùng kích thước chữ đọc được
 // cho mọi bề rộng màn hình chỉ bằng CSS viewBox. Bar cao theo %, chữ giữ nguyên px thật.
-const CHART_H = 200;
+// Chiều cao lấy từ CSS (.trend-chart height: clamp(...)) để tự co giãn theo viewport.
 
 function niceStep(maxScale) {
   return maxScale > 5 ? 2 : 1;
@@ -24,7 +24,6 @@ export default function GpaTrendChart({ semesters, scale }) {
         className="trend-chart"
         role="img"
         aria-label={`Biểu đồ GPA theo học kỳ, thang ${scale}`}
-        style={{ height: CHART_H }}
       >
         <div className="trend-grid">
           {gridValues.map((v) => (

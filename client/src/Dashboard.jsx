@@ -7,19 +7,40 @@ import SubjectsPanel from './panels/SubjectsPanel.jsx';
 import SemestersPanel from './panels/SemestersPanel.jsx';
 import SettingsPanel from './panels/SettingsPanel.jsx';
 import {
-  LayoutIcon,
-  ListIcon,
-  CalendarIcon,
-  SettingsIcon,
-  MenuIcon,
-  CloseIcon,
-  LogOutIcon,
-  PanelLeftIcon,
-  SunIcon,
-  MoonIcon,
-} from './Icons.jsx';
-
-const SIDEBAR_KEY = 'gt_sidebar_collapsed';
+  LayoutDashboard,
+  ListChecks,
+  CalendarDays,
+  Settings,
+  LogOut,
+  Sun,
+  Moon,
+} from 'lucide-react';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarTrigger,
+  SidebarInset,
+} from '@/components/ui/sidebar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const LEVEL_LABEL = {
   'pho-thong': 'Giáo dục phổ thông',
@@ -27,10 +48,10 @@ const LEVEL_LABEL = {
 };
 
 const NAV = [
-  { id: 'overview', label: 'Tổng quan', Icon: LayoutIcon },
-  { id: 'subjects', label: 'Môn học', Icon: ListIcon },
-  { id: 'semesters', label: 'Học kỳ', Icon: CalendarIcon },
-  { id: 'settings', label: 'Cài đặt', Icon: SettingsIcon },
+  { id: 'overview', label: 'Tổng quan', Icon: LayoutDashboard },
+  { id: 'subjects', label: 'Môn học', Icon: ListChecks },
+  { id: 'semesters', label: 'Học kỳ', Icon: CalendarDays },
+  { id: 'settings', label: 'Cài đặt', Icon: Settings },
 ];
 
 const EMPTY_DATA = {
@@ -43,26 +64,10 @@ const EMPTY_DATA = {
 
 export default function Dashboard({ user, onUserChange, onLogout }) {
   const [view, setView] = useState('overview');
-  const [navOpen, setNavOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_KEY) === '1');
   const [theme, setTheme] = useState(getTheme);
   const [data, setData] = useState(EMPTY_DATA);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  function toggleCollapsed() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem(SIDEBAR_KEY, next ? '1' : '0');
-      return next;
-    });
-  }
-
-  function toggleTheme() {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    setTheme(next);
-  }
 
   const level = user.educationLevel;
 
@@ -82,119 +87,121 @@ export default function Dashboard({ user, onUserChange, onLogout }) {
     reload();
   }, [reload]);
 
-  // Đóng menu khi chuyển trang trên mobile, tránh menu che nội dung vừa mở
-  function go(id) {
-    setView(id);
-    setNavOpen(false);
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    setTheme(next);
   }
 
   const current = NAV.find((n) => n.id === view);
 
   return (
-    <div className={`dash${navOpen ? ' nav-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
-      <aside className="sidebar" aria-label="Điều hướng chính">
-        <div className="sidebar-header">
-          <span className="sidebar-brand">
-            <span className="sidebar-brand-mark">
+    <SidebarProvider>
+      <Sidebar collapsible="icon">
+        <SidebarHeader>
+          <div className="flex items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-sidebar-border text-primary">
               <BrandMark size={15} />
             </span>
-            <span className="sidebar-brand-text">
-              <strong>Grade Tracker</strong>
-              <small>{LEVEL_LABEL[level]}</small>
+            <span className="grid min-w-0 group-data-[collapsible=icon]:hidden">
+              <span className="truncate text-sm font-medium text-sidebar-foreground">
+                Grade Tracker
+              </span>
+              <span className="truncate text-xs text-muted-foreground">{LEVEL_LABEL[level]}</span>
             </span>
-          </span>
-          <button type="button" className="icon-btn nav-close" onClick={() => setNavOpen(false)} aria-label="Đóng menu">
-            <CloseIcon />
-          </button>
-        </div>
+          </div>
+        </SidebarHeader>
 
-        <nav className="sidebar-nav">
-          <p className="sidebar-group-label">Quản lý</p>
-          {NAV.map(({ id, label, Icon }) => (
-            <button
-              key={id}
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Quản lý</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {NAV.map(({ id, label, Icon }) => (
+                  <SidebarMenuItem key={id}>
+                    <SidebarMenuButton
+                      isActive={view === id}
+                      tooltip={label}
+                      onClick={() => setView(id)}
+                    >
+                      <Icon />
+                      <span>{label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+
+        <SidebarFooter>
+          <div className="flex items-center gap-2 px-1 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+            <Avatar className="size-6.5 shrink-0">
+              <AvatarFallback className="text-[11px]">
+                {user.email.slice(0, 1).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+              {user.email}
+            </span>
+            <Button
               type="button"
-              className={`sidebar-item${view === id ? ' is-active' : ''}`}
-              aria-current={view === id ? 'page' : undefined}
-              onClick={() => go(id)}
-              title={collapsed ? label : undefined}
+              variant="ghost"
+              size="icon-sm"
+              className="shrink-0 group-data-[collapsible=icon]:hidden"
+              onClick={onLogout}
+              aria-label="Đăng xuất"
+              title="Đăng xuất"
             >
-              <Icon />
-              <span className="label">{label}</span>
-            </button>
-          ))}
-        </nav>
+              <LogOut />
+            </Button>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
 
-        <div className="sidebar-footer">
-          <span className="sidebar-user">
-            <span className="avatar" aria-hidden="true">
-              {user.email.slice(0, 1).toUpperCase()}
-            </span>
-            <span className="sidebar-user-mail">{user.email}</span>
-          </span>
-          <button type="button" className="icon-btn" onClick={onLogout} aria-label="Đăng xuất" title="Đăng xuất">
-            <LogOutIcon />
-          </button>
-        </div>
-      </aside>
+      <SidebarInset>
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
+          <SidebarTrigger />
+          <Separator orientation="vertical" className="mr-1 h-5" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem className="hidden sm:block text-muted-foreground">
+                Grade Tracker
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden sm:block" />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{current.label}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
 
-      <button
-        type="button"
-        className="sidebar-scrim"
-        onClick={() => setNavOpen(false)}
-        tabIndex={-1}
-        aria-hidden="true"
-      />
-
-      <div className="dash-main">
-        <header className="dash-header">
-          <button
+          <Button
             type="button"
-            className="icon-btn nav-trigger"
-            onClick={() => setNavOpen(true)}
-            aria-label="Mở menu"
-          >
-            <MenuIcon />
-          </button>
-          <button
-            type="button"
-            className="icon-btn collapse-trigger"
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
-            title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
-          >
-            <PanelLeftIcon />
-          </button>
-          <nav className="crumbs" aria-label="Breadcrumb">
-            <span>Grade Tracker</span>
-            <span className="crumb-sep" aria-hidden="true">
-              /
-            </span>
-            <span className="crumb-current">{current.label}</span>
-          </nav>
-          <button
-            type="button"
-            className="icon-btn theme-trigger"
+            variant="ghost"
+            size="icon-sm"
+            className="ml-auto"
             onClick={toggleTheme}
             aria-label={theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
             title={theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
           >
-            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-          </button>
+            {theme === 'dark' ? <Sun /> : <Moon />}
+          </Button>
         </header>
 
         <main className="dash-content">
           {error && (
-            <div className="alert" role="alert">
-              <span>{error}</span>
-              <button type="button" className="secondary" onClick={reload}>
-                Thử lại
-              </button>
-            </div>
+            <Alert variant="destructive" className="mb-3">
+              <AlertDescription className="flex items-center justify-between gap-3">
+                <span>{error}</span>
+                <Button type="button" variant="secondary" size="sm" onClick={reload}>
+                  Thử lại
+                </Button>
+              </AlertDescription>
+            </Alert>
           )}
 
           {view === 'overview' && (
-            <OverviewPanel data={data} level={level} loading={loading} onGoSubjects={() => go('subjects')} />
+            <OverviewPanel data={data} level={level} loading={loading} onGoSubjects={() => setView('subjects')} />
           )}
           {view === 'subjects' && (
             <SubjectsPanel data={data} level={level} loading={loading} reload={reload} />
@@ -204,7 +211,7 @@ export default function Dashboard({ user, onUserChange, onLogout }) {
             <SettingsPanel user={user} onUserChange={onUserChange} onLogout={onLogout} reload={reload} />
           )}
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

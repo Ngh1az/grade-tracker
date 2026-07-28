@@ -1,3 +1,12 @@
+@import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+/*
+ ---break---
+ */
+/* App dùng [data-theme] trên <html> (xem theme.js), không dùng class .dark của shadcn */
+@custom-variant dark (&:is([data-theme='dark'] *));
+
 /*
  * Hệ thiết kế lấy từ Linear DESIGN.md (VoltAgent/awesome-design-md).
  * Nguyên tắc chính đang tuân theo:
@@ -50,6 +59,42 @@
   --sp-xl: 32px;
 
   color-scheme: dark;
+
+  /* ---- Biến do shadcn init sinh ra — map thẳng sang token Linear phía trên
+   * (bằng var(), không phải giá trị cứng) để light/dark tự theo đúng cơ chế
+   * [data-theme] sẵn có, không cần khai báo lại riêng cho từng theme. ---- */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--surface-1);
+  --card-foreground: var(--ink);
+  --popover: var(--surface-2);
+  --popover-foreground: var(--ink);
+  --primary-foreground: var(--on-primary);
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--ink-subtle);
+  --accent: var(--surface-3);
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--on-primary);
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: var(--success);
+  --chart-3: var(--warn);
+  --chart-4: var(--danger);
+  --chart-5: var(--ink-subtle);
+  --radius: 8px;
+  --sidebar: var(--surface-1);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--on-primary);
+  --sidebar-accent: var(--surface-3);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: var(--primary);
 }
 
 /* Light: đảo thang surface (canvas sáng nhất → surface tối dần), chữ đảo ngược độ tương phản.
@@ -367,7 +412,22 @@ body {
 
 .dash-content {
   max-width: 1600px;
+  width: 100%;
   padding: var(--sp-lg) var(--sp-xl) 96px;
+}
+
+@media (min-width: 1920px) {
+  .dash-content {
+    max-width: 1920px;
+  }
+}
+
+@media (min-width: 2560px) {
+  .dash-content {
+    max-width: 2240px;
+    padding-left: 48px;
+    padding-right: 48px;
+  }
 }
 
 .panel-head {
@@ -389,11 +449,19 @@ h1 {
   letter-spacing: 0;
 }
 
+/* stretch (không phải start): 2 card cùng hàng phải bằng chiều cao nhau, nếu không
+ * đáy lệch nhau vài chục px trông như lỗi canh lề. Card ngắn hơn tự giãn nội dung. */
 .grid-2 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
   gap: var(--sp-sm);
-  align-items: start;
+  align-items: stretch;
+}
+
+@media (min-width: 1920px) {
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 480px);
+  }
 }
 
 /* Danh sách kiểu key–value ở trang Cài đặt */
@@ -415,8 +483,12 @@ h1 {
 }
 
 /* Thanh phân bố xếp loại — dùng 1 màu accent, không tô cầu vồng */
+/* grid-auto-rows: 1fr — khi card này thấp hơn card cạnh nó, phần cao dư chia đều cho
+ * từng dòng (mỗi dòng cao thêm bằng nhau, nội dung canh giữa) thay vì dồn hết xuống đáy. */
 .bars {
   display: grid;
+  grid-auto-rows: 1fr;
+  height: 100%;
   gap: var(--sp-sm);
   margin: 0;
   padding: 0;
@@ -467,6 +539,7 @@ h1 {
   position: relative;
   display: flex;
   padding-left: 28px;
+  height: clamp(200px, 22vh, 280px);
 }
 
 .trend-grid {
@@ -520,6 +593,12 @@ h1 {
   align-items: center;
 }
 
+@media (min-width: 1920px) {
+  .trend-col {
+    max-width: 112px;
+  }
+}
+
 .trend-bar-track {
   flex: 1;
   min-height: 0;
@@ -536,6 +615,12 @@ h1 {
   max-width: 40px;
   background: var(--primary);
   border-radius: var(--r-xs) var(--r-xs) 0 0;
+}
+
+@media (min-width: 1920px) {
+  .trend-bar {
+    max-width: 56px;
+  }
 }
 
 .chart-value-label {
@@ -705,7 +790,6 @@ button.block {
   background: var(--hairline);
 }
 
-
 .level-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -785,6 +869,12 @@ button.block {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--sp-sm);
   margin-bottom: var(--sp-lg);
+}
+
+@media (min-width: 1920px) {
+  .stats {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
 }
 
 .stat {
@@ -871,66 +961,10 @@ h2 {
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.3fr);
 }
 
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-  color: var(--ink-subtle);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.4px;
-}
-
-input,
-select {
-  width: 100%;
-  min-width: 0;
-  padding: 8px 12px;
-  min-height: 36px;
-  background: var(--surface-2);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  color: var(--ink);
-  font-family: inherit;
-  font-size: 14px;
-  letter-spacing: 0;
-  transition: border-color 0.12s ease, outline-color 0.12s ease;
-}
-
-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a8f98' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 32px;
-}
-
-select option {
-  background: var(--surface-1);
-  color: var(--ink);
-}
-
-input::placeholder {
-  color: var(--ink-tertiary);
-}
-
-input:hover:not(:focus),
-select:hover:not(:focus) {
-  border-color: var(--hairline-strong);
-}
-
-input:focus,
-select:focus {
-  border-color: var(--hairline-strong);
-  outline: 2px solid rgba(94, 105, 209, 0.5);
-  outline-offset: -1px;
-}
-
-input.has-error,
-select.has-error {
-  border-color: var(--danger);
-}
+/* Không còn selector thẻ trần cho label/input/select/button/table ở đây: CSS ngoài
+ * @layer luôn thắng mọi @layer (kể cả utilities của Tailwind) bất kể specificity, nên
+ * bộ style thẻ của bản trước shadcn đè lên chính component shadcn — nút nào cũng ra nền
+ * primary, input bị ép nền, label bị xoay dọc. Các component đó đã tự style đủ. */
 
 .field-error {
   color: var(--danger);
@@ -943,69 +977,6 @@ select.has-error {
   display: flex;
   gap: var(--sp-xs);
   margin-top: var(--sp-md);
-}
-
-/* ---------- Buttons ---------- */
-
-button {
-  padding: 8px 14px;
-  min-height: 36px;
-  border: 1px solid transparent;
-  border-radius: var(--r-md);
-  background: var(--primary);
-  color: var(--on-primary);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 0;
-  cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-}
-
-button:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-
-button:active:not(:disabled) {
-  background: var(--primary-focus);
-}
-
-button:focus-visible {
-  outline: 2px solid rgba(94, 105, 209, 0.5);
-  outline-offset: 1px;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-button.secondary {
-  background: var(--surface-2);
-  border-color: var(--hairline);
-  color: var(--ink);
-}
-
-button.secondary:hover:not(:disabled) {
-  background: var(--surface-3);
-  border-color: var(--hairline-strong);
-}
-
-button.ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--ink-subtle);
-}
-
-button.ghost:hover:not(:disabled) {
-  background: var(--surface-2);
-  color: var(--ink);
-}
-
-button.ghost.destructive:hover:not(:disabled) {
-  background: rgba(235, 87, 87, 0.12);
-  color: var(--danger);
 }
 
 /* ---------- Alert ---------- */
@@ -1042,42 +1013,8 @@ button.ghost.destructive:hover:not(:disabled) {
   padding: 0 var(--sp-lg);
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-  letter-spacing: 0;
-}
-
-th {
-  padding: 0 10px 10px;
-  color: var(--ink-subtle);
-  font-size: 12px;
-  font-weight: 500;
-  text-align: left;
-  letter-spacing: 0.4px;
-  border-bottom: 1px solid var(--hairline);
-}
-
-td {
-  padding: 11px 10px;
-  text-align: left;
-  border-bottom: 1px solid var(--hairline);
-  color: var(--ink-muted);
-}
-
-tbody tr:last-child td {
-  border-bottom: none;
-}
-
-tbody tr {
-  transition: background 0.12s ease;
-}
-
-tbody tr:hover {
-  background: var(--surface-2);
-}
-
+/* Khung bảng (nền/viền/padding) do component Table của shadcn lo — dưới đây chỉ còn
+ * phần riêng của app: dòng đang sửa và ô số căn theo tabular-nums. */
 tr.is-editing {
   background: var(--surface-2);
   box-shadow: inset 2px 0 0 var(--primary);
@@ -1140,11 +1077,6 @@ td.num {
   justify-content: flex-end;
 }
 
-.row-actions button {
-  min-height: 30px;
-  padding: 5px 10px;
-  font-size: 13px;
-}
 
 /* ---------- Empty + skeleton ---------- */
 
@@ -1301,13 +1233,75 @@ td.num {
     min-height: 44px;
   }
 
-  /* Touch target >= 44px theo spec */
-  input,
-  .actions button {
+  /* Touch target >= 44px theo spec. Nhắm data-slot để thắng chiều cao h-8 của shadcn
+   * mà không cần selector thẻ trần (thẻ trần sẽ đè lên mọi utility ở mọi màn hình). */
+  [data-slot='input'],
+  [data-slot='select-trigger'],
+  [data-slot='button'] {
     min-height: 44px;
   }
-
-  .actions button {
-    flex: 1;
+}
+/*
+ ---break---
+ */
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --breakpoint-3xl: 120rem;
+  --breakpoint-4xl: 160rem;
+}
+/*
+ * Không có block .dark { ... } ở đây — app chuyển theme bằng [data-theme] trên
+ * <html> (xem theme.js), không bằng class .dark. Mọi biến --background/--foreground/…
+ * ở :root phía trên đã var()-hoá sang token Linear nên tự đổi theo [data-theme] rồi,
+ * không cần định nghĩa lại cho dark riêng.
+ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
