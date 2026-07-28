@@ -8,7 +8,10 @@ import {
   gpaScale,
   gradeLabel,
   groupBySemester,
+  toGrade4,
+  subjectRank,
   LEVEL_SCHOOL,
+  LEVEL_UNIVERSITY,
 } from '../grade.js';
 
 const router = Router();
@@ -19,14 +22,23 @@ function isValidId(id) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
-/** Bậc phổ thông bỏ qua tín chỉ do người dùng gửi lên, luôn ghi 1. */
+/** Bậc phổ thông bỏ qua tín chỉ/năm học do người dùng gửi lên (nếu có), luôn ghi tín chỉ = 1. */
 function buildPayload(body, level) {
-  return {
+  const payload = {
     name: body.name.trim(),
     credits: level === LEVEL_SCHOOL ? 1 : Number(body.credits),
     grade: Number(body.grade),
     semester: body.semester.trim(),
   };
+  if (level === LEVEL_UNIVERSITY) payload.academicYear = String(body.academicYear).trim();
+  return payload;
+}
+
+/** Điểm hệ 4 + điểm chữ + xếp loại riêng của môn, chỉ có ý nghĩa ở bậc đại học. */
+function subjectExtras(grade10, level) {
+  if (level !== LEVEL_UNIVERSITY) return {};
+  const { letter, point } = toGrade4(grade10);
+  return { grade4: point, letter, rank: subjectRank(letter) };
 }
 
 router.get(
@@ -42,7 +54,9 @@ router.get(
         credits: s.credits,
         grade: s.grade,
         semester: s.semester,
+        academicYear: s.academicYear,
         label: gradeLabel(s.grade, level),
+        ...subjectExtras(s.grade, level),
       })),
       gpa,
       gpaScale: gpaScale(level),

@@ -119,13 +119,17 @@ không biết đang ở bậc nào:
 | | Giáo dục phổ thông | Giáo dục đại học |
 |---|---|---|
 | Tín chỉ | không dùng | có, là trọng số |
+| Năm học | không dùng | có, dạng `YYYY-YYYY` |
 | Thang GPA | 10 | 4 (quy đổi từ thang 10) |
 | Cách tính | trung bình cộng điểm các môn | bình quân điểm thang 4 theo tín chỉ |
-| Nhãn từng môn | Giỏi · Khá · TB · Yếu · Kém | A · B+ · B · C+ · C · D+ · D · F |
-| Xếp loại | Giỏi ≥8 · Khá ≥6.5 · TB ≥5 · Yếu ≥3.5 · Kém | Xuất sắc ≥3.6 · Giỏi ≥3.2 · Khá ≥2.5 · TB ≥2 · Không đạt |
+| Cột hiển thị mỗi môn | Tên môn · Điểm · Học kỳ | Tên môn · Số tín · Điểm hệ 10 · Điểm hệ 4 · Điểm chữ · Xếp loại môn · Học kỳ · Năm học |
+| Xếp loại môn (riêng từng môn) | Giỏi · Khá · TB · Yếu · Kém | Giỏi (A) · Khá (B+/B) · Trung bình (C+/C) · Trung bình yếu (D+/D) · Không đạt (F) |
+| Xếp loại GPA (toàn khoá) | Giỏi ≥8 · Khá ≥6.5 · TB ≥5 · Yếu ≥3.5 · Kém | Xuất sắc ≥3.6 · Giỏi ≥3.2 · Khá ≥2.5 · TB ≥2 · Không đạt |
 
-Quy đổi thang 4 và mốc xếp loại bậc đại học theo Thông tư 08/2021. Bậc phổ thông ghi `credits: 1`
-cho mọi môn nên trọng số bằng nhau, và ẩn hẳn cột Tín chỉ ở form lẫn bảng.
+Quy đổi thang 4 và mốc xếp loại bậc đại học theo Thông tư 08/2021. "Xếp loại môn" khác "Xếp loại GPA"
+— môn thì xếp theo điểm chữ riêng nó, GPA xếp theo bình quân cả khoá; hai thang không dùng chung mốc.
+Bậc phổ thông ghi `credits: 1` cho mọi môn nên trọng số bằng nhau, và không có khái niệm năm học/điểm
+chữ nên ẩn hẳn các cột đó ở form lẫn bảng.
 
 ## API
 
@@ -147,7 +151,10 @@ Nhóm `/api/subjects` trả **401** khi thiếu/sai token và **409** kèm `code
 chưa chọn bậc học — client dùng mã 409 này để mở màn chọn bậc thay vì hiện bảng điểm rỗng.
 
 Entity `Subject`: `user` (ref User), `name` (string), `credits` (1-10, phổ thông luôn 1),
-`grade` (0-10, thang 10 ở cả hai bậc), `semester` (string), `createdAt`.
+`grade` (0-10, thang 10 ở cả hai bậc), `semester` (string), `academicYear` (string `YYYY-YYYY`,
+bắt buộc ở bậc đại học, không dùng ở phổ thông), `createdAt`. Response GET thêm các trường tính
+sẵn: `label` (điểm chữ hoặc nhãn học lực), và riêng bậc đại học có thêm `grade4` (điểm hệ 4),
+`letter` (điểm chữ), `rank` (xếp loại môn).
 Entity `User`: `email` (unique), `passwordHash`, `educationLevel` (`null` cho tới khi chọn).
 
 ## Chạy local

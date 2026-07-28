@@ -33,6 +33,7 @@ export default function SemestersPanel({ data, level, loading }) {
               <thead>
                 <tr>
                   <th>HỌC KỲ</th>
+                  {usesCredits && <th>NĂM HỌC</th>}
                   <th>SỐ MÔN</th>
                   {usesCredits && <th>TÍN CHỈ</th>}
                   <th>GPA</th>
@@ -41,8 +42,9 @@ export default function SemestersPanel({ data, level, loading }) {
               </thead>
               <tbody>
                 {semesters.map((s) => (
-                  <tr key={s.semester}>
+                  <tr key={`${s.semester}-${s.academicYear}`}>
                     <td className="name">{s.semester}</td>
+                    {usesCredits && <td className="sem">{s.academicYear || '—'}</td>}
                     <td className="num">{s.count}</td>
                     {usesCredits && <td className="num">{s.credits}</td>}
                     <td className="num grade-num">{s.gpa}</td>

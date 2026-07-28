@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { createSubject, updateSubject, deleteSubject } from '../api.js';
 
-const EMPTY_FORM = { name: '', credits: '', grade: '', semester: '' };
+const EMPTY_FORM = { name: '', credits: '', grade: '', semester: '', academicYear: '' };
+const YEAR_RE = /^\d{4}-\d{4}$/;
 
 function validate(form, usesCredits) {
   const errors = {};
@@ -10,6 +11,7 @@ function validate(form, usesCredits) {
     const credits = Number(form.credits);
     if (!form.credits || !Number.isFinite(credits) || credits < 1 || credits > 10)
       errors.credits = 'Tín chỉ từ 1 đến 10';
+    if (!YEAR_RE.test(form.academicYear.trim())) errors.academicYear = 'Dạng YYYY-YYYY, ví dụ 2025-2026';
   }
   const grade = Number(form.grade);
   if (form.grade === '' || !Number.isFinite(grade) || grade < 0 || grade > 10)
@@ -51,7 +53,9 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
       name: form.name.trim(),
       grade: Number(form.grade),
       semester: form.semester.trim(),
-      ...(usesCredits ? { credits: Number(form.credits) } : {}),
+      ...(usesCredits
+        ? { credits: Number(form.credits), academicYear: form.academicYear.trim() }
+        : {}),
     };
 
     setSaving(true);
@@ -75,6 +79,7 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
       credits: String(subject.credits),
       grade: String(subject.grade),
       semester: subject.semester,
+      academicYear: subject.academicYear || '',
     });
     setFormErrors({});
   }
@@ -135,7 +140,7 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
             </label>
           )}
           <label>
-            ĐIỂM
+            ĐIỂM (THANG 10)
             <input
               type="number"
               min="0"
@@ -153,11 +158,25 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
             <input
               value={form.semester}
               onChange={(e) => setForm({ ...form, semester: e.target.value })}
-              placeholder="HK1-2026"
+              placeholder={usesCredits ? 'HK1' : 'HK1-2026'}
               className={formErrors.semester ? 'has-error' : ''}
             />
             {formErrors.semester && <span className="field-error">{formErrors.semester}</span>}
           </label>
+          {usesCredits && (
+            <label>
+              NĂM HỌC
+              <input
+                value={form.academicYear}
+                onChange={(e) => setForm({ ...form, academicYear: e.target.value })}
+                placeholder="2025-2026"
+                className={formErrors.academicYear ? 'has-error' : ''}
+              />
+              {formErrors.academicYear && (
+                <span className="field-error">{formErrors.academicYear}</span>
+              )}
+            </label>
+          )}
         </div>
         <div className="actions">
           <button type="submit" disabled={saving}>
@@ -191,13 +210,61 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
             <p>Chưa có môn học nào.</p>
             <p>Thêm môn đầu tiên bằng biểu mẫu ở trên.</p>
           </div>
+        ) : usesCredits ? (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>TÊN MÔN</th>
+                  <th>SỐ TÍN</th>
+                  <th>ĐIỂM HỆ 10</th>
+                  <th>ĐIỂM HỆ 4</th>
+                  <th>ĐIỂM CHỮ</th>
+                  <th>XẾP LOẠI</th>
+                  <th>HỌC KỲ</th>
+                  <th>NĂM HỌC</th>
+                  <th aria-label="Hành động" />
+                </tr>
+              </thead>
+              <tbody>
+                {subjects.map((s) => (
+                  <tr key={s._id} className={editingId === s._id ? 'is-editing' : ''}>
+                    <td className="name">{s.name}</td>
+                    <td className="num">{s.credits}</td>
+                    <td className="num grade-num">{s.grade.toFixed(1)}</td>
+                    <td className="num grade-num">{s.grade4.toFixed(1)}</td>
+                    <td>
+                      <span className="grade">
+                        <span className={`grade-dot ${gradeLevel(s.grade)}`} aria-hidden="true" />
+                        <span className="grade-letter">{s.letter}</span>
+                      </span>
+                    </td>
+                    <td className="sem">{s.rank}</td>
+                    <td className="sem">{s.semester}</td>
+                    <td className="sem">{s.academicYear || '—'}</td>
+                    <td className="row-actions">
+                      <button type="button" className="ghost" onClick={() => handleEdit(s)}>
+                        Sửa
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost destructive"
+                        onClick={() => handleDelete(s)}
+                      >
+                        Xoá
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>TÊN MÔN</th>
-                  {usesCredits && <th>TÍN CHỈ</th>}
                   <th>ĐIỂM</th>
                   <th>HỌC KỲ</th>
                   <th aria-label="Hành động" />
@@ -207,7 +274,6 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
                 {subjects.map((s) => (
                   <tr key={s._id} className={editingId === s._id ? 'is-editing' : ''}>
                     <td className="name">{s.name}</td>
-                    {usesCredits && <td className="num">{s.credits}</td>}
                     <td>
                       <span className="grade">
                         <span className={`grade-dot ${gradeLevel(s.grade)}`} aria-hidden="true" />

@@ -45,6 +45,29 @@ export function gradeLabel(grade10, level) {
   return 'Kém';
 }
 
+/**
+ * Xếp loại CỦA TỪNG MÔN ở bậc đại học, suy từ điểm chữ — khác với classify(), vốn
+ * xếp loại GPA toàn khoá. Theo quy ước tín chỉ phổ biến (Quy chế 43): A=Giỏi,
+ * B+/B=Khá, C+/C=Trung bình, D+/D=Trung bình yếu (vẫn đạt), F=Không đạt.
+ */
+export function subjectRank(letter) {
+  switch (letter) {
+    case 'A':
+      return 'Giỏi';
+    case 'B+':
+    case 'B':
+      return 'Khá';
+    case 'C+':
+    case 'C':
+      return 'Trung bình';
+    case 'D+':
+    case 'D':
+      return 'Trung bình yếu';
+    default:
+      return 'Không đạt';
+  }
+}
+
 function round2(n) {
   return Math.round(n * 100) / 100;
 }
@@ -93,40 +116,48 @@ export function classify(gpa, level = LEVEL_UNIVERSITY) {
 }
 
 /**
- * Gom môn theo học kỳ, tính GPA từng kỳ bằng đúng công thức của bậc đang chọn.
- * Sắp xếp giảm dần theo tên học kỳ để kỳ mới nhất lên đầu.
+ * Gom môn theo học kỳ (+ năm học nếu có, để không lẫn "HK1" của hai năm khác nhau
+ * vào cùng một nhóm), tính GPA từng kỳ bằng đúng công thức của bậc đang chọn.
+ * Sắp xếp giảm dần để kỳ mới nhất lên đầu.
  */
 export function groupBySemester(subjects, level = LEVEL_UNIVERSITY) {
   const buckets = new Map();
   for (const s of subjects || []) {
-    if (!buckets.has(s.semester)) buckets.set(s.semester, []);
-    buckets.get(s.semester).push(s);
+    const key = `${s.semester}|${s.academicYear || ''}`;
+    if (!buckets.has(key)) buckets.set(key, { semester: s.semester, academicYear: s.academicYear || '', items: [] });
+    buckets.get(key).items.push(s);
   }
 
-  return [...buckets.entries()]
-    .map(([semester, items]) => {
+  return [...buckets.values()]
+    .map(({ semester, academicYear, items }) => {
       const gpa = calculateGPA(items, level);
       return {
         semester,
+        academicYear,
         count: items.length,
         credits: items.reduce((total, s) => total + Number(s.credits), 0),
         gpa,
         classification: classify(gpa, level),
       };
     })
-    .sort((a, b) => b.semester.localeCompare(a.semester));
+    .sort((a, b) => `${b.academicYear}${b.semester}`.localeCompare(`${a.academicYear}${a.semester}`));
 }
+
+const ACADEMIC_YEAR_RE = /^\d{4}-\d{4}$/;
 
 export function validateSubject(input, level = LEVEL_UNIVERSITY) {
   const errors = [];
   if (!input.name || typeof input.name !== 'string' || !input.name.trim()) {
     errors.push('name is required');
   }
-  // Phổ thông không có tín chỉ — mỗi môn tính trọng số bằng nhau.
+  // Phổ thông không có tín chỉ / năm học riêng theo yêu cầu hiện tại — mỗi môn trọng số bằng nhau.
   if (level === LEVEL_UNIVERSITY) {
     const credits = Number(input.credits);
     if (!Number.isFinite(credits) || credits < 1 || credits > 10) {
       errors.push('credits must be a number between 1 and 10');
+    }
+    if (!input.academicYear || !ACADEMIC_YEAR_RE.test(String(input.academicYear).trim())) {
+      errors.push('academicYear must be in the form YYYY-YYYY');
     }
   }
   const grade = Number(input.grade);

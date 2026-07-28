@@ -747,11 +747,12 @@ h2 {
 .fields {
   display: grid;
   /* minmax(0, …): 1fr không co nhỏ hơn min-content của input nên sẽ tràn ngang trên màn hẹp */
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
+  /* Đại học: Tên môn · Tín chỉ · Điểm · Học kỳ · Năm học */
+  grid-template-columns: minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--sp-sm);
 }
 
-/* Bậc phổ thông không có cột Tín chỉ */
+/* Bậc phổ thông: không có Tín chỉ / Năm học */
 .fields.no-credits {
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.3fr);
 }
