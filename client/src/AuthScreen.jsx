@@ -143,10 +143,6 @@ export default function AuthScreen({ onAuthenticated }) {
           {isRegister ? 'Tôi đã có tài khoản' : 'Tạo tài khoản mới'}
         </button>
       </form>
-
-      <p className="auth-foot">
-        Mật khẩu được lưu dưới dạng băm bcrypt, không lưu bản gốc.
-      </p>
     </div>
   );
 }

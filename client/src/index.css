@@ -273,15 +273,6 @@ button.block {
   background: var(--hairline);
 }
 
-.auth-foot {
-  margin: 0;
-  max-width: 384px;
-  color: var(--ink-tertiary);
-  font-size: 12px;
-  line-height: 1.5;
-  letter-spacing: 0;
-  text-align: center;
-}
 
 .level-options {
   display: grid;
