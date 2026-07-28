@@ -1,16 +1,11 @@
 export default function SemestersPanel({ data, level, loading }) {
   const usesCredits = level === 'dai-hoc';
-  const { semesters, gpaScale } = data;
+  const { semesters } = data;
 
   return (
     <div className="panel">
       <div className="panel-head">
-        <div>
-          <h1>Học kỳ</h1>
-          <p className="subtitle">
-            GPA từng kỳ tính bằng đúng công thức của bậc đang chọn, thang {gpaScale}.
-          </p>
-        </div>
+        <h1>Học kỳ</h1>
       </div>
 
       <section className="card">

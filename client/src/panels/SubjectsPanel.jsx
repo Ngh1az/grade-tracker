@@ -94,12 +94,7 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
   return (
     <div className="panel">
       <div className="panel-head">
-        <div>
-          <h1>Môn học</h1>
-          <p className="subtitle">
-            Thêm, sửa, xoá môn. {usesCredits ? 'Tín chỉ là trọng số khi tính GPA.' : 'Mọi môn có trọng số bằng nhau.'}
-          </p>
-        </div>
+        <h1>Môn học</h1>
       </div>
 
       {error && (

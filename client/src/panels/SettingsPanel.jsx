@@ -41,10 +41,7 @@ export default function SettingsPanel({ user, onUserChange, onLogout, reload }) 
   return (
     <div className="panel">
       <div className="panel-head">
-        <div>
-          <h1>Cài đặt</h1>
-          <p className="subtitle">Tài khoản và cách tính điểm.</p>
-        </div>
+        <h1>Cài đặt</h1>
       </div>
 
       <section className="card">

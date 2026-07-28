@@ -15,7 +15,7 @@ function gradeLevel(grade) {
 
 export default function OverviewPanel({ data, level, loading, onGoSubjects }) {
   const usesCredits = level === 'dai-hoc';
-  const { subjects, gpa, gpaScale, classification, semesters } = data;
+  const { subjects, gpa, classification, semesters } = data;
 
   const totalCredits = subjects.reduce((sum, s) => sum + s.credits, 0);
   const passed = subjects.filter((s) => s.grade >= 4).length;
@@ -45,13 +45,7 @@ export default function OverviewPanel({ data, level, loading, onGoSubjects }) {
   return (
     <div className="panel">
       <div className="panel-head">
-        <div>
-          <h1>Tổng quan</h1>
-          <p className="subtitle">
-            GPA thang {gpaScale}
-            {usesCredits ? ', tính theo trọng số tín chỉ.' : ', trung bình cộng các môn.'}
-          </p>
-        </div>
+        <h1>Tổng quan</h1>
       </div>
 
       <div className="stats">
