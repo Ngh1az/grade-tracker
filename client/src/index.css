@@ -203,7 +203,9 @@ h2 {
 
 .fields {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.3fr;
+  /* minmax(0, …) thay vì 1fr: mặc định 1fr không co nhỏ hơn min-content của input
+     (input có size mặc định ~20 ký tự) nên grid sẽ tràn ngang trên màn hình hẹp */
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
   gap: 14px;
 }
 
@@ -211,12 +213,15 @@ label {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
   font-size: 0.8rem;
   font-weight: 550;
   color: var(--muted);
 }
 
 input {
+  width: 100%;
+  min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 9px;
@@ -512,7 +517,7 @@ tr.is-editing:hover {
   }
 
   .fields {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .fields label:first-child {
