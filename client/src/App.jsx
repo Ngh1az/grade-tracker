@@ -16,6 +16,24 @@ function validate(form) {
   return errors;
 }
 
+// Thang điểm 10 quy về xếp loại chữ để hiển thị badge màu
+function gradeInfo(grade) {
+  if (grade >= 8.5) return { cls: 'g-good', letter: 'A' };
+  if (grade >= 7) return { cls: 'g-ok', letter: 'B' };
+  if (grade >= 5.5) return { cls: 'g-mid', letter: 'C' };
+  if (grade >= 4) return { cls: 'g-mid', letter: 'D' };
+  return { cls: 'g-bad', letter: 'F' };
+}
+
+function classify(gpa) {
+  if (gpa >= 9) return 'Xuất sắc';
+  if (gpa >= 8) return 'Giỏi';
+  if (gpa >= 7) return 'Khá';
+  if (gpa >= 5.5) return 'Trung bình';
+  if (gpa > 0) return 'Yếu';
+  return '—';
+}
+
 export default function App() {
   const [subjects, setSubjects] = useState([]);
   const [gpa, setGpa] = useState(0);
@@ -100,18 +118,44 @@ export default function App() {
     }
   }
 
+  const totalCredits = subjects.reduce((sum, s) => sum + s.credits, 0);
+  const passed = subjects.filter((s) => s.grade >= 4).length;
+
   return (
     <div className="app">
       <header>
-        <h1>Quản lý Môn học &amp; Điểm số</h1>
-        <div className="gpa">
-          GPA (trung bình theo tín chỉ): <strong>{gpa}</strong>
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            🎓
+          </span>
+          <div>
+            <h1>Quản lý Môn học &amp; Điểm số</h1>
+            <p className="subtitle">Theo dõi điểm từng môn và GPA trung bình theo tín chỉ</p>
+          </div>
+        </div>
+
+        <div className="stats">
+          <div className="stat is-hero">
+            <span className="stat-label">GPA</span>
+            <span className="stat-value">{gpa}</span>
+            <span className="stat-hint">{classify(gpa)}</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Số môn</span>
+            <span className="stat-value">{subjects.length}</span>
+            <span className="stat-hint">{passed} môn đạt (≥ 4)</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Tổng tín chỉ</span>
+            <span className="stat-value">{totalCredits}</span>
+            <span className="stat-hint">đã tích luỹ</span>
+          </div>
         </div>
       </header>
 
       {error && (
         <div className="alert" role="alert">
-          {error}
+          <span>{error}</span>
           <button type="button" onClick={load}>
             Thử lại
           </button>
@@ -119,7 +163,9 @@ export default function App() {
       )}
 
       <form onSubmit={handleSubmit} className="card">
-        <h2>{editingId ? 'Sửa môn học' : 'Thêm môn học'}</h2>
+        <div className="card-head">
+          <h2>{editingId ? 'Sửa môn học' : 'Thêm môn học'}</h2>
+        </div>
         <div className="fields">
           <label>
             Tên môn
@@ -127,6 +173,7 @@ export default function App() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Ví dụ: Lập trình Web"
+              className={formErrors.name ? 'has-error' : ''}
             />
             {formErrors.name && <span className="field-error">{formErrors.name}</span>}
           </label>
@@ -138,6 +185,8 @@ export default function App() {
               max="10"
               value={form.credits}
               onChange={(e) => setForm({ ...form, credits: e.target.value })}
+              placeholder="3"
+              className={formErrors.credits ? 'has-error' : ''}
             />
             {formErrors.credits && <span className="field-error">{formErrors.credits}</span>}
           </label>
@@ -150,6 +199,8 @@ export default function App() {
               step="0.1"
               value={form.grade}
               onChange={(e) => setForm({ ...form, grade: e.target.value })}
+              placeholder="8.5"
+              className={formErrors.grade ? 'has-error' : ''}
             />
             {formErrors.grade && <span className="field-error">{formErrors.grade}</span>}
           </label>
@@ -159,13 +210,14 @@ export default function App() {
               value={form.semester}
               onChange={(e) => setForm({ ...form, semester: e.target.value })}
               placeholder="HK1-2026"
+              className={formErrors.semester ? 'has-error' : ''}
             />
             {formErrors.semester && <span className="field-error">{formErrors.semester}</span>}
           </label>
         </div>
         <div className="actions">
           <button type="submit" disabled={saving}>
-            {saving ? 'Đang lưu...' : editingId ? 'Cập nhật' : 'Thêm'}
+            {saving ? 'Đang lưu...' : editingId ? 'Cập nhật' : 'Thêm môn học'}
           </button>
           {editingId && (
             <button type="button" onClick={resetForm} className="secondary">
@@ -176,41 +228,67 @@ export default function App() {
       </form>
 
       <div className="card">
-        <h2>Danh sách môn học ({subjects.length})</h2>
+        <div className="card-head">
+          <h2>Danh sách môn học</h2>
+          {!loading && subjects.length > 0 && (
+            <span className="count-pill">{subjects.length} môn</span>
+          )}
+        </div>
+
         {loading ? (
-          <p className="muted">Đang tải...</p>
+          <div aria-live="polite" aria-busy="true">
+            <span className="skeleton-row" style={{ width: '100%' }} />
+            <span className="skeleton-row" style={{ width: '92%' }} />
+            <span className="skeleton-row" style={{ width: '96%' }} />
+            <span className="skeleton-row" style={{ width: '85%' }} />
+          </div>
         ) : subjects.length === 0 ? (
-          <p className="muted">Chưa có môn học nào. Thêm môn đầu tiên ở trên.</p>
+          <div className="empty">
+            <span className="empty-mark" aria-hidden="true">
+              📚
+            </span>
+            <p>Chưa có môn học nào. Thêm môn đầu tiên ở trên.</p>
+          </div>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Tên môn</th>
-                <th>Tín chỉ</th>
-                <th>Điểm</th>
-                <th>Học kỳ</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {subjects.map((s) => (
-                <tr key={s._id}>
-                  <td>{s.name}</td>
-                  <td>{s.credits}</td>
-                  <td>{s.grade}</td>
-                  <td>{s.semester}</td>
-                  <td className="row-actions">
-                    <button type="button" onClick={() => handleEdit(s)} className="secondary">
-                      Sửa
-                    </button>
-                    <button type="button" onClick={() => handleDelete(s)} className="danger">
-                      Xoá
-                    </button>
-                  </td>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Tên môn</th>
+                  <th>Tín chỉ</th>
+                  <th>Điểm</th>
+                  <th>Học kỳ</th>
+                  <th aria-label="Hành động" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {subjects.map((s) => {
+                  const g = gradeInfo(s.grade);
+                  return (
+                    <tr key={s._id} className={editingId === s._id ? 'is-editing' : ''}>
+                      <td className="name">{s.name}</td>
+                      <td className="num">{s.credits}</td>
+                      <td>
+                        <span className={`grade-badge ${g.cls}`}>
+                          {s.grade}
+                          <small>{g.letter}</small>
+                        </span>
+                      </td>
+                      <td className="sem">{s.semester}</td>
+                      <td className="row-actions">
+                        <button type="button" onClick={() => handleEdit(s)} className="secondary">
+                          Sửa
+                        </button>
+                        <button type="button" onClick={() => handleDelete(s)} className="danger">
+                          Xoá
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
