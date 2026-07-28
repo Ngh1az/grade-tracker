@@ -92,6 +92,31 @@ export function classify(gpa, level = LEVEL_UNIVERSITY) {
   return 'Không đạt';
 }
 
+/**
+ * Gom môn theo học kỳ, tính GPA từng kỳ bằng đúng công thức của bậc đang chọn.
+ * Sắp xếp giảm dần theo tên học kỳ để kỳ mới nhất lên đầu.
+ */
+export function groupBySemester(subjects, level = LEVEL_UNIVERSITY) {
+  const buckets = new Map();
+  for (const s of subjects || []) {
+    if (!buckets.has(s.semester)) buckets.set(s.semester, []);
+    buckets.get(s.semester).push(s);
+  }
+
+  return [...buckets.entries()]
+    .map(([semester, items]) => {
+      const gpa = calculateGPA(items, level);
+      return {
+        semester,
+        count: items.length,
+        credits: items.reduce((total, s) => total + Number(s.credits), 0),
+        gpa,
+        classification: classify(gpa, level),
+      };
+    })
+    .sort((a, b) => b.semester.localeCompare(a.semester));
+}
+
 export function validateSubject(input, level = LEVEL_UNIVERSITY) {
   const errors = [];
   if (!input.name || typeof input.name !== 'string' || !input.name.trim()) {

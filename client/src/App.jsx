@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchMe, getToken, clearToken, ApiError } from './api.js';
 import AuthScreen from './AuthScreen.jsx';
 import LevelPicker from './LevelPicker.jsx';
-import SubjectsView from './SubjectsView.jsx';
-import BrandMark from './BrandMark.jsx';
+import Dashboard from './Dashboard.jsx';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -50,19 +49,5 @@ export default function App() {
     return <LevelPicker email={user.email} onPicked={setUser} onLogout={handleLogout} />;
   }
 
-  return (
-    <>
-      <nav className="top-nav">
-        <span className="wordmark">
-          <BrandMark />
-          Grade Tracker
-        </span>
-        <span className="nav-user">{user.email}</span>
-        <button type="button" className="ghost" onClick={handleLogout}>
-          Đăng xuất
-        </button>
-      </nav>
-      <SubjectsView level={user.educationLevel} />
-    </>
-  );
+  return <Dashboard user={user} onUserChange={setUser} onLogout={handleLogout} />;
 }

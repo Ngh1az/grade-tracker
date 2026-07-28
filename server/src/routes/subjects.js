@@ -7,6 +7,7 @@ import {
   classify,
   gpaScale,
   gradeLabel,
+  groupBySemester,
   LEVEL_SCHOOL,
 } from '../grade.js';
 
@@ -47,6 +48,7 @@ router.get(
       gpaScale: gpaScale(level),
       classification: classify(gpa, level),
       educationLevel: level,
+      semesters: groupBySemester(subjects, level),
     });
   })
 );

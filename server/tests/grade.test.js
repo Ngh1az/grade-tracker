@@ -5,6 +5,7 @@ import {
   gradeLabel,
   classify,
   gpaScale,
+  groupBySemester,
   isValidLevel,
   LEVEL_SCHOOL,
   LEVEL_UNIVERSITY,
@@ -170,6 +171,49 @@ describe('gpaScale và isValidLevel', () => {
     expect(isValidLevel(LEVEL_UNIVERSITY)).toBe(true);
     expect(isValidLevel('cao-hoc')).toBe(false);
     expect(isValidLevel(null)).toBe(false);
+  });
+});
+
+describe('groupBySemester', () => {
+  const subjects = [
+    { name: 'A', credits: 3, grade: 9, semester: 'HK1-2026' },
+    { name: 'B', credits: 2, grade: 6, semester: 'HK1-2026' },
+    { name: 'C', credits: 4, grade: 8, semester: 'HK2-2026' },
+  ];
+
+  test('trả mảng rỗng khi chưa có môn nào', () => {
+    expect(groupBySemester([], LEVEL_UNIVERSITY)).toEqual([]);
+  });
+
+  test('gom đúng số môn và tổng tín chỉ mỗi kỳ', () => {
+    const result = groupBySemester(subjects, LEVEL_UNIVERSITY);
+    expect(result).toHaveLength(2);
+    const hk1 = result.find((r) => r.semester === 'HK1-2026');
+    expect(hk1.count).toBe(2);
+    expect(hk1.credits).toBe(5);
+  });
+
+  test('kỳ mới nhất xếp lên đầu', () => {
+    expect(groupBySemester(subjects, LEVEL_UNIVERSITY).map((r) => r.semester)).toEqual([
+      'HK2-2026',
+      'HK1-2026',
+    ]);
+  });
+
+  test('GPA từng kỳ tính theo công thức bậc đại học', () => {
+    const hk1 = groupBySemester(subjects, LEVEL_UNIVERSITY).find(
+      (r) => r.semester === 'HK1-2026'
+    );
+    // (4×3 + 2×2) / 5 = 3.2
+    expect(hk1.gpa).toBe(3.2);
+    expect(hk1.classification).toBe('Giỏi');
+  });
+
+  test('GPA từng kỳ tính theo công thức bậc phổ thông', () => {
+    const hk1 = groupBySemester(subjects, LEVEL_SCHOOL).find((r) => r.semester === 'HK1-2026');
+    // trung bình cộng (9 + 6) / 2 = 7.5, bỏ qua tín chỉ
+    expect(hk1.gpa).toBe(7.5);
+    expect(hk1.classification).toBe('Khá');
   });
 });
 

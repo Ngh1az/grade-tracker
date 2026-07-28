@@ -1,12 +1,7 @@
-import { useEffect, useState } from 'react';
-import { listSubjects, createSubject, updateSubject, deleteSubject } from './api.js';
+import { useState } from 'react';
+import { createSubject, updateSubject, deleteSubject } from '../api.js';
 
 const EMPTY_FORM = { name: '', credits: '', grade: '', semester: '' };
-
-const LEVEL_LABEL = {
-  'pho-thong': 'Giáo dục phổ thông',
-  'dai-hoc': 'Giáo dục đại học',
-};
 
 function validate(form, usesCredits) {
   const errors = {};
@@ -30,39 +25,15 @@ function gradeLevel(grade) {
   return 'g-low';
 }
 
-export default function SubjectsView({ level }) {
+export default function SubjectsPanel({ data, level, loading, reload }) {
   const usesCredits = level === 'dai-hoc';
+  const { subjects } = data;
 
-  const [subjects, setSubjects] = useState([]);
-  const [gpa, setGpa] = useState(0);
-  const [scale, setScale] = useState(usesCredits ? 4 : 10);
-  const [classification, setClassification] = useState('Chưa có dữ liệu');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [form, setForm] = useState(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
-
-  async function load() {
-    setLoading(true);
-    setError('');
-    try {
-      const data = await listSubjects();
-      setSubjects(data.subjects);
-      setGpa(data.gpa);
-      setScale(data.gpaScale);
-      setClassification(data.classification);
-    } catch (err) {
-      setError(`Không tải được dữ liệu: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
+  const [error, setError] = useState('');
 
   function resetForm() {
     setForm(EMPTY_FORM);
@@ -89,7 +60,7 @@ export default function SubjectsView({ level }) {
       if (editingId) await updateSubject(editingId, payload);
       else await createSubject(payload);
       resetForm();
-      await load();
+      await reload();
     } catch (err) {
       setError(`Lưu thất bại: ${err.message}`);
     } finally {
@@ -114,57 +85,33 @@ export default function SubjectsView({ level }) {
     try {
       await deleteSubject(subject._id);
       if (editingId === subject._id) resetForm();
-      await load();
+      await reload();
     } catch (err) {
       setError(`Xoá thất bại: ${err.message}`);
     }
   }
 
-  const totalCredits = subjects.reduce((sum, s) => sum + s.credits, 0);
-  const passed = subjects.filter((s) => s.grade >= 4).length;
-
   return (
-    <div className="app">
-      <header className="page-head">
-        <h1>Môn học &amp; Điểm số</h1>
-        <p className="subtitle">
-          {LEVEL_LABEL[level]} — GPA thang {scale}
-          {usesCredits ? ', tính theo trọng số tín chỉ.' : ', trung bình cộng các môn.'}
-        </p>
-      </header>
-
-      <div className="stats">
-        <div className="stat">
-          <span className="stat-label">GPA</span>
-          <span className="stat-value">{gpa}</span>
-          <span className="stat-hint">{classification}</span>
+    <div className="panel">
+      <div className="panel-head">
+        <div>
+          <h1>Môn học</h1>
+          <p className="subtitle">
+            Thêm, sửa, xoá môn. {usesCredits ? 'Tín chỉ là trọng số khi tính GPA.' : 'Mọi môn có trọng số bằng nhau.'}
+          </p>
         </div>
-        <div className="stat">
-          <span className="stat-label">Số môn</span>
-          <span className="stat-value">{subjects.length}</span>
-          <span className="stat-hint">{passed} môn đạt từ 4.0 trở lên</span>
-        </div>
-        {usesCredits && (
-          <div className="stat">
-            <span className="stat-label">Tín chỉ</span>
-            <span className="stat-value">{totalCredits}</span>
-            <span className="stat-hint">tổng đã tích luỹ</span>
-          </div>
-        )}
       </div>
 
       {error && (
         <div className="alert" role="alert">
           <span>{error}</span>
-          <button type="button" className="secondary" onClick={load}>
-            Thử lại
-          </button>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="card">
         <div className="card-head">
           <h2>{editingId ? 'Sửa môn học' : 'Thêm môn học'}</h2>
+          {editingId && <span className="status-badge">đang sửa</span>}
         </div>
         <div className={`fields${usesCredits ? '' : ' no-credits'}`}>
           <label>
