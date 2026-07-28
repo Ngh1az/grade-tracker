@@ -299,8 +299,8 @@ body {
 }
 
 .dash-content {
-  max-width: 1120px;
-  padding: var(--sp-lg) var(--sp-lg) 96px;
+  max-width: 1600px;
+  padding: var(--sp-lg) var(--sp-xl) 96px;
 }
 
 .panel-head {
@@ -324,7 +324,7 @@ h1 {
 
 .grid-2 {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
   gap: var(--sp-sm);
   align-items: start;
 }
