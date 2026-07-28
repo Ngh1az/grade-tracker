@@ -1,6 +1,10 @@
-const RANKS = {
-  'dai-hoc': ['Xuất sắc', 'Giỏi', 'Khá', 'Trung bình', 'Không đạt'],
-  'pho-thong': ['Giỏi', 'Khá', 'Trung bình', 'Yếu', 'Kém'],
+/**
+ * Nhãn của TỪNG MÔN (không phải xếp loại GPA): bậc đại học là điểm chữ,
+ * bậc phổ thông là nhãn học lực. Liệt kê sẵn để giữ đúng thứ tự từ cao xuống thấp.
+ */
+const SUBJECT_LABELS = {
+  'dai-hoc': ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'],
+  'pho-thong': ['Giỏi', 'Khá', 'TB', 'Yếu', 'Kém'],
 };
 
 function gradeLevel(grade) {
@@ -17,9 +21,8 @@ export default function OverviewPanel({ data, level, loading, onGoSubjects }) {
   const passed = subjects.filter((s) => s.grade >= 4).length;
   const best = subjects.reduce((top, s) => (top && top.grade >= s.grade ? top : s), null);
 
-  // Phân bố xếp loại: đếm theo nhãn mà server đã tính, nên luôn khớp bậc đang chọn
-  const ranks = RANKS[level] || [];
-  const distribution = ranks
+  // Đếm theo nhãn server đã tính cho từng môn, nên luôn khớp bậc đang chọn
+  const distribution = (SUBJECT_LABELS[level] || [])
     .map((rank) => ({ rank, count: subjects.filter((s) => s.label === rank).length }))
     .filter((r) => r.count > 0);
   const maxCount = Math.max(1, ...distribution.map((d) => d.count));
@@ -131,7 +134,7 @@ export default function OverviewPanel({ data, level, loading, onGoSubjects }) {
 
           <section className="card">
             <div className="card-head">
-              <h2>Phân bố xếp loại</h2>
+              <h2>{usesCredits ? 'Phân bố điểm chữ' : 'Phân bố học lực'}</h2>
             </div>
             <ul className="bars">
               {distribution.map(({ rank, count }) => (
