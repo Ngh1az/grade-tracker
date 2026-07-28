@@ -2,6 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import subjectsRouter from './routes/subjects.js';
+import authRouter from './routes/auth.js';
+import requireAuth from './middleware/requireAuth.js';
+import requireLevel from './middleware/requireLevel.js';
 import { metricsMiddleware, register } from './metrics.js';
 
 export function createApp() {
@@ -25,7 +28,8 @@ export function createApp() {
     res.end(await register.metrics());
   });
 
-  app.use('/api/subjects', subjectsRouter);
+  app.use('/api/auth', authRouter);
+  app.use('/api/subjects', requireAuth, requireLevel, subjectsRouter);
 
   app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
