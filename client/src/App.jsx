@@ -16,13 +16,20 @@ function validate(form) {
   return errors;
 }
 
-// Thang điểm 10 quy về xếp loại chữ để hiển thị badge màu
-function gradeInfo(grade) {
-  if (grade >= 8.5) return { cls: 'g-good', letter: 'A' };
-  if (grade >= 7) return { cls: 'g-ok', letter: 'B' };
-  if (grade >= 5.5) return { cls: 'g-mid', letter: 'C' };
-  if (grade >= 4) return { cls: 'g-mid', letter: 'D' };
-  return { cls: 'g-bad', letter: 'F' };
+// Dot chỉ 3 mức để giữ đúng nguyên tắc "không thêm accent màu thứ hai" của Linear;
+// điểm chữ đi kèm ở tông chữ mờ, không tô nền màu.
+function gradeLevel(grade) {
+  if (grade >= 7) return 'g-high';
+  if (grade >= 5) return 'g-mid';
+  return 'g-low';
+}
+
+function gradeLetter(grade) {
+  if (grade >= 8.5) return 'A';
+  if (grade >= 7) return 'B';
+  if (grade >= 5.5) return 'C';
+  if (grade >= 4) return 'D';
+  return 'F';
 }
 
 function classify(gpa) {
@@ -31,7 +38,17 @@ function classify(gpa) {
   if (gpa >= 7) return 'Khá';
   if (gpa >= 5.5) return 'Trung bình';
   if (gpa > 0) return 'Yếu';
-  return '—';
+  return 'Chưa có dữ liệu';
+}
+
+function BrandMark() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+      <rect x="0.5" y="0.5" width="14" height="14" rx="3.5" stroke="currentColor" />
+      <path d="M4 8.6V5.2L7.5 3.5L11 5.2V8.6" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M7.5 8.2V11.5" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
 }
 
 export default function App() {
@@ -122,20 +139,23 @@ export default function App() {
   const passed = subjects.filter((s) => s.grade >= 4).length;
 
   return (
-    <div className="app">
-      <header>
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            🎓
-          </span>
-          <div>
-            <h1>Quản lý Môn học &amp; Điểm số</h1>
-            <p className="subtitle">Theo dõi điểm từng môn và GPA trung bình theo tín chỉ</p>
-          </div>
-        </div>
+    <>
+      <nav className="top-nav">
+        <span className="wordmark">
+          <BrandMark />
+          Grade Tracker
+        </span>
+        <span className="nav-meta">nghiatech.click</span>
+      </nav>
+
+      <div className="app">
+        <header className="page-head">
+          <h1>Môn học &amp; Điểm số</h1>
+          <p className="subtitle">Theo dõi điểm từng môn và GPA trung bình theo tín chỉ.</p>
+        </header>
 
         <div className="stats">
-          <div className="stat is-hero">
+          <div className="stat">
             <span className="stat-label">GPA</span>
             <span className="stat-value">{gpa}</span>
             <span className="stat-hint">{classify(gpa)}</span>
@@ -143,154 +163,154 @@ export default function App() {
           <div className="stat">
             <span className="stat-label">Số môn</span>
             <span className="stat-value">{subjects.length}</span>
-            <span className="stat-hint">{passed} môn đạt (≥ 4)</span>
+            <span className="stat-hint">{passed} môn đạt từ 4.0 trở lên</span>
           </div>
           <div className="stat">
-            <span className="stat-label">Tổng tín chỉ</span>
+            <span className="stat-label">Tín chỉ</span>
             <span className="stat-value">{totalCredits}</span>
-            <span className="stat-hint">đã tích luỹ</span>
+            <span className="stat-hint">tổng đã tích luỹ</span>
           </div>
         </div>
-      </header>
 
-      {error && (
-        <div className="alert" role="alert">
-          <span>{error}</span>
-          <button type="button" onClick={load}>
-            Thử lại
-          </button>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="card">
-        <div className="card-head">
-          <h2>{editingId ? 'Sửa môn học' : 'Thêm môn học'}</h2>
-        </div>
-        <div className="fields">
-          <label>
-            Tên môn
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ví dụ: Lập trình Web"
-              className={formErrors.name ? 'has-error' : ''}
-            />
-            {formErrors.name && <span className="field-error">{formErrors.name}</span>}
-          </label>
-          <label>
-            Tín chỉ
-            <input
-              type="number"
-              min="1"
-              max="10"
-              value={form.credits}
-              onChange={(e) => setForm({ ...form, credits: e.target.value })}
-              placeholder="3"
-              className={formErrors.credits ? 'has-error' : ''}
-            />
-            {formErrors.credits && <span className="field-error">{formErrors.credits}</span>}
-          </label>
-          <label>
-            Điểm
-            <input
-              type="number"
-              min="0"
-              max="10"
-              step="0.1"
-              value={form.grade}
-              onChange={(e) => setForm({ ...form, grade: e.target.value })}
-              placeholder="8.5"
-              className={formErrors.grade ? 'has-error' : ''}
-            />
-            {formErrors.grade && <span className="field-error">{formErrors.grade}</span>}
-          </label>
-          <label>
-            Học kỳ
-            <input
-              value={form.semester}
-              onChange={(e) => setForm({ ...form, semester: e.target.value })}
-              placeholder="HK1-2026"
-              className={formErrors.semester ? 'has-error' : ''}
-            />
-            {formErrors.semester && <span className="field-error">{formErrors.semester}</span>}
-          </label>
-        </div>
-        <div className="actions">
-          <button type="submit" disabled={saving}>
-            {saving ? 'Đang lưu...' : editingId ? 'Cập nhật' : 'Thêm môn học'}
-          </button>
-          {editingId && (
-            <button type="button" onClick={resetForm} className="secondary">
-              Huỷ
+        {error && (
+          <div className="alert" role="alert">
+            <span>{error}</span>
+            <button type="button" className="secondary" onClick={load}>
+              Thử lại
             </button>
-          )}
-        </div>
-      </form>
-
-      <div className="card">
-        <div className="card-head">
-          <h2>Danh sách môn học</h2>
-          {!loading && subjects.length > 0 && (
-            <span className="count-pill">{subjects.length} môn</span>
-          )}
-        </div>
-
-        {loading ? (
-          <div aria-live="polite" aria-busy="true">
-            <span className="skeleton-row" style={{ width: '100%' }} />
-            <span className="skeleton-row" style={{ width: '92%' }} />
-            <span className="skeleton-row" style={{ width: '96%' }} />
-            <span className="skeleton-row" style={{ width: '85%' }} />
           </div>
-        ) : subjects.length === 0 ? (
-          <div className="empty">
-            <span className="empty-mark" aria-hidden="true">
-              📚
-            </span>
-            <p>Chưa có môn học nào. Thêm môn đầu tiên ở trên.</p>
+        )}
+
+        <form onSubmit={handleSubmit} className="card">
+          <div className="card-head">
+            <h2>{editingId ? 'Sửa môn học' : 'Thêm môn học'}</h2>
           </div>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Tên môn</th>
-                  <th>Tín chỉ</th>
-                  <th>Điểm</th>
-                  <th>Học kỳ</th>
-                  <th aria-label="Hành động" />
-                </tr>
-              </thead>
-              <tbody>
-                {subjects.map((s) => {
-                  const g = gradeInfo(s.grade);
-                  return (
+          <div className="fields">
+            <label>
+              TÊN MÔN
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Lập trình Web"
+                className={formErrors.name ? 'has-error' : ''}
+              />
+              {formErrors.name && <span className="field-error">{formErrors.name}</span>}
+            </label>
+            <label>
+              TÍN CHỈ
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={form.credits}
+                onChange={(e) => setForm({ ...form, credits: e.target.value })}
+                placeholder="3"
+                className={formErrors.credits ? 'has-error' : ''}
+              />
+              {formErrors.credits && <span className="field-error">{formErrors.credits}</span>}
+            </label>
+            <label>
+              ĐIỂM
+              <input
+                type="number"
+                min="0"
+                max="10"
+                step="0.1"
+                value={form.grade}
+                onChange={(e) => setForm({ ...form, grade: e.target.value })}
+                placeholder="8.5"
+                className={formErrors.grade ? 'has-error' : ''}
+              />
+              {formErrors.grade && <span className="field-error">{formErrors.grade}</span>}
+            </label>
+            <label>
+              HỌC KỲ
+              <input
+                value={form.semester}
+                onChange={(e) => setForm({ ...form, semester: e.target.value })}
+                placeholder="HK1-2026"
+                className={formErrors.semester ? 'has-error' : ''}
+              />
+              {formErrors.semester && <span className="field-error">{formErrors.semester}</span>}
+            </label>
+          </div>
+          <div className="actions">
+            <button type="submit" disabled={saving}>
+              {saving ? 'Đang lưu…' : editingId ? 'Cập nhật' : 'Thêm môn học'}
+            </button>
+            {editingId && (
+              <button type="button" onClick={resetForm} className="secondary">
+                Huỷ
+              </button>
+            )}
+          </div>
+        </form>
+
+        <section className="card">
+          <div className="card-head">
+            <h2>Danh sách môn học</h2>
+            {!loading && subjects.length > 0 && (
+              <span className="status-badge">{subjects.length} môn</span>
+            )}
+          </div>
+
+          {loading ? (
+            <div aria-live="polite" aria-busy="true">
+              <span className="skeleton" style={{ width: '100%' }} />
+              <span className="skeleton" style={{ width: '88%' }} />
+              <span className="skeleton" style={{ width: '94%' }} />
+              <span className="skeleton" style={{ width: '76%' }} />
+            </div>
+          ) : subjects.length === 0 ? (
+            <div className="empty">
+              <p>Chưa có môn học nào.</p>
+              <p>Thêm môn đầu tiên bằng biểu mẫu ở trên.</p>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>TÊN MÔN</th>
+                    <th>TÍN CHỈ</th>
+                    <th>ĐIỂM</th>
+                    <th>HỌC KỲ</th>
+                    <th aria-label="Hành động" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {subjects.map((s) => (
                     <tr key={s._id} className={editingId === s._id ? 'is-editing' : ''}>
                       <td className="name">{s.name}</td>
                       <td className="num">{s.credits}</td>
                       <td>
-                        <span className={`grade-badge ${g.cls}`}>
-                          {s.grade}
-                          <small>{g.letter}</small>
+                        <span className="grade">
+                          <span className={`grade-dot ${gradeLevel(s.grade)}`} aria-hidden="true" />
+                          <span className="grade-num">{s.grade.toFixed(1)}</span>
+                          <span className="grade-letter">{gradeLetter(s.grade)}</span>
                         </span>
                       </td>
                       <td className="sem">{s.semester}</td>
                       <td className="row-actions">
-                        <button type="button" onClick={() => handleEdit(s)} className="secondary">
+                        <button type="button" className="ghost" onClick={() => handleEdit(s)}>
                           Sửa
                         </button>
-                        <button type="button" onClick={() => handleDelete(s)} className="danger">
+                        <button
+                          type="button"
+                          className="ghost destructive"
+                          onClick={() => handleDelete(s)}
+                        >
                           Xoá
                         </button>
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
-    </div>
+    </>
   );
 }
