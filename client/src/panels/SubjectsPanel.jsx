@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { createSubject, updateSubject, deleteSubject } from '../api.js';
 
 const EMPTY_FORM = { name: '', credits: '', grade: '', semester: '', academicYear: '' };
-const YEAR_RE = /^\d{4}-\d{4}$/;
+const YEAR_RE = /^\d{4}$/;
 
 // Chỉ áp cho bậc đại học — phổ thông vẫn dùng 1 chuỗi tự do như trước (không có năm học riêng).
 const SEMESTER_OPTIONS = [
@@ -11,13 +11,14 @@ const SEMESTER_OPTIONS = [
   { value: 'HK3', label: 'Học kỳ hè (HK3)' },
 ];
 
-/** Năm học hiện tại bắt đầu tháng 9; trước đó tính vào năm học của năm trước.
+/** Năm học ghi 1 số duy nhất (năm bắt đầu, ví dụ "2025" cho niên khoá 2025-2026) —
+ * đỡ rối hơn ghi cả cặp. Năm học hiện tại bắt đầu tháng 9; trước đó tính vào năm trước.
  * Trả 6 năm gần nhất + 1 năm tới, mới nhất lên đầu. */
 function academicYearOptions() {
   const now = new Date();
   const startYear = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
   const years = [];
-  for (let y = startYear + 1; y >= startYear - 5; y--) years.push(`${y}-${y + 1}`);
+  for (let y = startYear + 1; y >= startYear - 5; y--) years.push(String(y));
   return years;
 }
 

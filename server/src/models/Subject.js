@@ -9,7 +9,7 @@ const subjectSchema = new mongoose.Schema(
     credits: { type: Number, required: true, min: 1, max: 10, default: 1 },
     grade: { type: Number, required: true, min: 0, max: 10 },
     semester: { type: String, required: true, trim: true },
-    // Chỉ dùng ở bậc đại học ("2025-2026"); phổ thông không set field này
+    // Chỉ dùng ở bậc đại học, ghi năm bắt đầu niên khoá ("2025"); phổ thông không set field này
     academicYear: { type: String, trim: true },
   },
   { timestamps: true }

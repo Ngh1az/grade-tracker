@@ -143,7 +143,7 @@ export function groupBySemester(subjects, level = LEVEL_UNIVERSITY) {
     .sort((a, b) => `${b.academicYear}${b.semester}`.localeCompare(`${a.academicYear}${a.semester}`));
 }
 
-const ACADEMIC_YEAR_RE = /^\d{4}-\d{4}$/;
+const ACADEMIC_YEAR_RE = /^\d{4}$/;
 
 export function validateSubject(input, level = LEVEL_UNIVERSITY) {
   const errors = [];
@@ -157,7 +157,7 @@ export function validateSubject(input, level = LEVEL_UNIVERSITY) {
       errors.push('credits must be a number between 1 and 10');
     }
     if (!input.academicYear || !ACADEMIC_YEAR_RE.test(String(input.academicYear).trim())) {
-      errors.push('academicYear must be in the form YYYY-YYYY');
+      errors.push('academicYear must be a 4-digit year');
     }
   }
   const grade = Number(input.grade);

@@ -192,9 +192,9 @@ describe('gpaScale và isValidLevel', () => {
 
 describe('groupBySemester', () => {
   const subjects = [
-    { name: 'A', credits: 3, grade: 9, semester: 'HK1', academicYear: '2025-2026' },
-    { name: 'B', credits: 2, grade: 6, semester: 'HK1', academicYear: '2025-2026' },
-    { name: 'C', credits: 4, grade: 8, semester: 'HK2', academicYear: '2025-2026' },
+    { name: 'A', credits: 3, grade: 9, semester: 'HK1', academicYear: '2025' },
+    { name: 'B', credits: 2, grade: 6, semester: 'HK1', academicYear: '2025' },
+    { name: 'C', credits: 4, grade: 8, semester: 'HK2', academicYear: '2025' },
   ];
 
   test('trả mảng rỗng khi chưa có môn nào', () => {
@@ -218,13 +218,13 @@ describe('groupBySemester', () => {
 
   test('không lẫn hai học kỳ trùng tên nhưng khác năm học', () => {
     const twoYears = [
-      { credits: 3, grade: 9, semester: 'HK1', academicYear: '2024-2025' },
-      { credits: 3, grade: 5, semester: 'HK1', academicYear: '2025-2026' },
+      { credits: 3, grade: 9, semester: 'HK1', academicYear: '2024' },
+      { credits: 3, grade: 5, semester: 'HK1', academicYear: '2025' },
     ];
     const result = groupBySemester(twoYears, LEVEL_UNIVERSITY);
     expect(result).toHaveLength(2);
-    expect(result.find((r) => r.academicYear === '2024-2025').gpa).toBe(4);
-    expect(result.find((r) => r.academicYear === '2025-2026').gpa).toBe(1.5);
+    expect(result.find((r) => r.academicYear === '2024').gpa).toBe(4);
+    expect(result.find((r) => r.academicYear === '2025').gpa).toBe(1.5);
   });
 
   test('GPA từng kỳ tính theo công thức bậc đại học', () => {
@@ -246,7 +246,7 @@ describe('validateSubject', () => {
   test('đại học: chấp nhận môn hợp lệ', () => {
     expect(
       validateSubject(
-        { name: 'Toán', credits: 3, grade: 8, semester: 'HK1', academicYear: '2025-2026' },
+        { name: 'Toán', credits: 3, grade: 8, semester: 'HK1', academicYear: '2025' },
         LEVEL_UNIVERSITY
       )
     ).toEqual([]);
@@ -254,24 +254,24 @@ describe('validateSubject', () => {
 
   test('đại học: bắt buộc có tín chỉ hợp lệ', () => {
     const errors = validateSubject(
-      { name: 'Toán', grade: 8, semester: 'HK1', academicYear: '2025-2026' },
+      { name: 'Toán', grade: 8, semester: 'HK1', academicYear: '2025' },
       LEVEL_UNIVERSITY
     );
     expect(errors).toContain('credits must be a number between 1 and 10');
   });
 
-  test('đại học: bắt buộc có năm học đúng dạng YYYY-YYYY', () => {
+  test('đại học: bắt buộc có năm học là số có 4 chữ số', () => {
     const missing = validateSubject(
       { name: 'Toán', credits: 3, grade: 8, semester: 'HK1' },
       LEVEL_UNIVERSITY
     );
-    expect(missing).toContain('academicYear must be in the form YYYY-YYYY');
+    expect(missing).toContain('academicYear must be a 4-digit year');
 
     const malformed = validateSubject(
-      { name: 'Toán', credits: 3, grade: 8, semester: 'HK1', academicYear: '2025' },
+      { name: 'Toán', credits: 3, grade: 8, semester: 'HK1', academicYear: '2025-2026' },
       LEVEL_UNIVERSITY
     );
-    expect(malformed).toContain('academicYear must be in the form YYYY-YYYY');
+    expect(malformed).toContain('academicYear must be a 4-digit year');
   });
 
   test('phổ thông: không cần tín chỉ hay năm học', () => {

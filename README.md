@@ -119,7 +119,7 @@ không biết đang ở bậc nào:
 | | Giáo dục phổ thông | Giáo dục đại học |
 |---|---|---|
 | Tín chỉ | không dùng | có, là trọng số |
-| Năm học | không dùng | có, dạng `YYYY-YYYY` |
+| Năm học | không dùng | có, 1 số (năm bắt đầu niên khoá, ví dụ `2025`) |
 | Thang GPA | 10 | 4 (quy đổi từ thang 10) |
 | Cách tính | trung bình cộng điểm các môn | bình quân điểm thang 4 theo tín chỉ |
 | Cột hiển thị mỗi môn | Tên môn · Điểm · Học kỳ | Tên môn · Số tín · Điểm hệ 10 · Điểm hệ 4 · Điểm chữ · Xếp loại môn · Học kỳ · Năm học |
@@ -151,8 +151,8 @@ Nhóm `/api/subjects` trả **401** khi thiếu/sai token và **409** kèm `code
 chưa chọn bậc học — client dùng mã 409 này để mở màn chọn bậc thay vì hiện bảng điểm rỗng.
 
 Entity `Subject`: `user` (ref User), `name` (string), `credits` (1-10, phổ thông luôn 1),
-`grade` (0-10, thang 10 ở cả hai bậc), `semester` (string), `academicYear` (string `YYYY-YYYY`,
-bắt buộc ở bậc đại học, không dùng ở phổ thông), `createdAt`. Response GET thêm các trường tính
+`grade` (0-10, thang 10 ở cả hai bậc), `semester` (string), `academicYear` (string `YYYY`, năm bắt
+đầu niên khoá, bắt buộc ở bậc đại học, không dùng ở phổ thông), `createdAt`. Response GET thêm các trường tính
 sẵn: `label` (điểm chữ hoặc nhãn học lực), và riêng bậc đại học có thêm `grade4` (điểm hệ 4),
 `letter` (điểm chữ), `rank` (xếp loại môn).
 Entity `User`: `email` (unique), `passwordHash`, `educationLevel` (`null` cho tới khi chọn).
