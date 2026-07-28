@@ -461,52 +461,100 @@ h1 {
   margin-top: var(--sp-sm);
 }
 
+/* HTML/CSS thuần thay SVG: chữ giữ nguyên px thật ở mọi bề rộng màn hình,
+ * không co theo scale như text trong SVG viewBox (xem comment trong GpaTrendChart.jsx). */
 .trend-chart {
-  display: block;
-  width: 100%;
-  height: 240px;
-  overflow: visible;
+  position: relative;
+  display: flex;
+  padding-left: 28px;
 }
 
-.chart-grid {
-  stroke: var(--hairline);
-  stroke-width: 1;
+.trend-grid {
+  position: absolute;
+  inset: 0 0 38px 28px;
 }
 
-.chart-axis {
-  stroke: var(--hairline-strong);
-  stroke-width: 1;
+.trend-grid-row {
+  position: absolute;
+  left: 0;
+  right: 0;
 }
 
 .chart-grid-label {
-  fill: var(--ink-tertiary);
-  font-size: 12px;
-  text-anchor: start;
+  position: absolute;
+  left: -28px;
+  top: -7px;
+  width: 24px;
+  color: var(--ink-tertiary);
+  font-size: 11px;
+  text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-.chart-bar {
-  fill: var(--primary);
+.chart-grid-line {
+  display: block;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.chart-axis-line {
+  display: block;
+  height: 1px;
+  background: var(--hairline-strong);
+}
+
+.trend-bars {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: var(--sp-sm);
+  width: 100%;
+  height: 100%;
+}
+
+.trend-col {
+  flex: 1;
+  max-width: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.trend-bar-track {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.trend-bar {
+  display: block;
+  width: 100%;
+  max-width: 40px;
+  background: var(--primary);
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
 }
 
 .chart-value-label {
-  fill: var(--ink);
+  color: var(--ink);
   font-size: 13px;
   font-weight: 500;
-  text-anchor: middle;
   font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
 }
 
 .chart-axis-label {
-  fill: var(--ink-muted);
+  margin-top: 6px;
+  color: var(--ink-muted);
   font-size: 12px;
-  text-anchor: middle;
 }
 
 .chart-axis-sublabel {
-  fill: var(--ink-tertiary);
+  color: var(--ink-tertiary);
   font-size: 10px;
-  text-anchor: middle;
 }
 
 .sr-only {
