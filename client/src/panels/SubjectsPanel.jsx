@@ -4,6 +4,23 @@ import { createSubject, updateSubject, deleteSubject } from '../api.js';
 const EMPTY_FORM = { name: '', credits: '', grade: '', semester: '', academicYear: '' };
 const YEAR_RE = /^\d{4}-\d{4}$/;
 
+// Chỉ áp cho bậc đại học — phổ thông vẫn dùng 1 chuỗi tự do như trước (không có năm học riêng).
+const SEMESTER_OPTIONS = [
+  { value: 'HK1', label: 'Học kỳ 1 (HK1)' },
+  { value: 'HK2', label: 'Học kỳ 2 (HK2)' },
+  { value: 'HK3', label: 'Học kỳ hè (HK3)' },
+];
+
+/** Năm học hiện tại bắt đầu tháng 9; trước đó tính vào năm học của năm trước.
+ * Trả 6 năm gần nhất + 1 năm tới, mới nhất lên đầu. */
+function academicYearOptions() {
+  const now = new Date();
+  const startYear = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+  const years = [];
+  for (let y = startYear + 1; y >= startYear - 5; y--) years.push(`${y}-${y + 1}`);
+  return years;
+}
+
 function validate(form, usesCredits) {
   const errors = {};
   if (!form.name.trim()) errors.name = 'Nhập tên môn';
@@ -11,12 +28,14 @@ function validate(form, usesCredits) {
     const credits = Number(form.credits);
     if (!form.credits || !Number.isFinite(credits) || credits < 1 || credits > 10)
       errors.credits = 'Tín chỉ từ 1 đến 10';
-    if (!YEAR_RE.test(form.academicYear.trim())) errors.academicYear = 'Dạng YYYY-YYYY, ví dụ 2025-2026';
+    if (!YEAR_RE.test(form.academicYear.trim())) errors.academicYear = 'Chọn năm học';
+    if (!form.semester.trim()) errors.semester = 'Chọn học kỳ';
+  } else if (!form.semester.trim()) {
+    errors.semester = 'Nhập học kỳ';
   }
   const grade = Number(form.grade);
   if (form.grade === '' || !Number.isFinite(grade) || grade < 0 || grade > 10)
     errors.grade = 'Điểm từ 0 đến 10';
-  if (!form.semester.trim()) errors.semester = 'Nhập học kỳ';
   return errors;
 }
 
@@ -155,23 +174,48 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
           </label>
           <label>
             HỌC KỲ
-            <input
-              value={form.semester}
-              onChange={(e) => setForm({ ...form, semester: e.target.value })}
-              placeholder={usesCredits ? 'HK1' : 'HK1-2026'}
-              className={formErrors.semester ? 'has-error' : ''}
-            />
+            {usesCredits ? (
+              <select
+                value={form.semester}
+                onChange={(e) => setForm({ ...form, semester: e.target.value })}
+                className={formErrors.semester ? 'has-error' : ''}
+              >
+                <option value="" disabled>
+                  -- Chọn học kỳ --
+                </option>
+                {SEMESTER_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={form.semester}
+                onChange={(e) => setForm({ ...form, semester: e.target.value })}
+                placeholder="HK1-2026"
+                className={formErrors.semester ? 'has-error' : ''}
+              />
+            )}
             {formErrors.semester && <span className="field-error">{formErrors.semester}</span>}
           </label>
           {usesCredits && (
             <label>
               NĂM HỌC
-              <input
+              <select
                 value={form.academicYear}
                 onChange={(e) => setForm({ ...form, academicYear: e.target.value })}
-                placeholder="2025-2026"
                 className={formErrors.academicYear ? 'has-error' : ''}
-              />
+              >
+                <option value="" disabled>
+                  -- Chọn năm học --
+                </option>
+                {academicYearOptions().map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
               {formErrors.academicYear && (
                 <span className="field-error">{formErrors.academicYear}</span>
               )}
