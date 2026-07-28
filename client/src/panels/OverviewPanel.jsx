@@ -1,3 +1,5 @@
+import GpaTrendChart from './GpaTrendChart.jsx';
+
 /**
  * Nhãn của TỪNG MÔN (không phải xếp loại GPA): bậc đại học là điểm chữ,
  * bậc phổ thông là nhãn học lực. Liệt kê sẵn để giữ đúng thứ tự từ cao xuống thấp.
@@ -15,7 +17,7 @@ function gradeLevel(grade) {
 
 export default function OverviewPanel({ data, level, loading, onGoSubjects }) {
   const usesCredits = level === 'dai-hoc';
-  const { subjects, gpa, classification, semesters } = data;
+  const { subjects, gpa, gpaScale, classification, semesters } = data;
 
   const totalCredits = subjects.reduce((sum, s) => sum + s.credits, 0);
   const passed = subjects.filter((s) => s.grade >= 4).length;
@@ -143,6 +145,15 @@ export default function OverviewPanel({ data, level, loading, onGoSubjects }) {
             </ul>
           </section>
         </div>
+      )}
+
+      {semesters.length > 0 && (
+        <section className="card chart-card">
+          <div className="card-head">
+            <h2>GPA theo học kỳ</h2>
+          </div>
+          <GpaTrendChart semesters={semesters} scale={gpaScale} />
+        </section>
       )}
     </div>
   );
