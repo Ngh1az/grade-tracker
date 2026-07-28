@@ -69,3 +69,31 @@ export const CloseIcon = () => (
     <path d="m6 6 12 12" />
   </svg>
 );
+
+// Icon "panel-left" — cùng ký hiệu dùng cho nút thu/mở sidebar ở shadcn/ui
+export const PanelLeftIcon = () => (
+  <svg {...base}>
+    <rect width="18" height="18" x="3" y="3" rx="2" />
+    <path d="M9 3v18" />
+  </svg>
+);
+
+export const SunIcon = () => (
+  <svg {...base}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2" />
+    <path d="M12 20v2" />
+    <path d="m4.93 4.93 1.41 1.41" />
+    <path d="m17.66 17.66 1.41 1.41" />
+    <path d="M2 12h2" />
+    <path d="M20 12h2" />
+    <path d="m6.34 17.66-1.41 1.41" />
+    <path d="m19.07 4.93-1.41 1.41" />
+  </svg>
+);
+
+export const MoonIcon = () => (
+  <svg {...base}>
+    <path d="M12.5 2.5a9 9 0 1 0 8.9 10.1c.1-.5-.5-.9-.9-.6a6.5 6.5 0 0 1-8.4-8.4c.2-.5-.1-1-.6-1.1z" />
+  </svg>
+);

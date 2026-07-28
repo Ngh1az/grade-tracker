@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { listSubjects } from './api.js';
+import { applyTheme, getTheme } from './theme.js';
 import BrandMark from './BrandMark.jsx';
 import OverviewPanel from './panels/OverviewPanel.jsx';
 import SubjectsPanel from './panels/SubjectsPanel.jsx';
@@ -13,7 +14,12 @@ import {
   MenuIcon,
   CloseIcon,
   LogOutIcon,
+  PanelLeftIcon,
+  SunIcon,
+  MoonIcon,
 } from './Icons.jsx';
+
+const SIDEBAR_KEY = 'gt_sidebar_collapsed';
 
 const LEVEL_LABEL = {
   'pho-thong': 'Giáo dục phổ thông',
@@ -38,9 +44,25 @@ const EMPTY_DATA = {
 export default function Dashboard({ user, onUserChange, onLogout }) {
   const [view, setView] = useState('overview');
   const [navOpen, setNavOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_KEY) === '1');
+  const [theme, setTheme] = useState(getTheme);
   const [data, setData] = useState(EMPTY_DATA);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  function toggleCollapsed() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(SIDEBAR_KEY, next ? '1' : '0');
+      return next;
+    });
+  }
+
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    setTheme(next);
+  }
 
   const level = user.educationLevel;
 
@@ -69,7 +91,7 @@ export default function Dashboard({ user, onUserChange, onLogout }) {
   const current = NAV.find((n) => n.id === view);
 
   return (
-    <div className={`dash${navOpen ? ' nav-open' : ''}`}>
+    <div className={`dash${navOpen ? ' nav-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <aside className="sidebar" aria-label="Điều hướng chính">
         <div className="sidebar-header">
           <span className="sidebar-brand">
@@ -95,9 +117,10 @@ export default function Dashboard({ user, onUserChange, onLogout }) {
               className={`sidebar-item${view === id ? ' is-active' : ''}`}
               aria-current={view === id ? 'page' : undefined}
               onClick={() => go(id)}
+              title={collapsed ? label : undefined}
             >
               <Icon />
-              {label}
+              <span className="label">{label}</span>
             </button>
           ))}
         </nav>
@@ -133,6 +156,15 @@ export default function Dashboard({ user, onUserChange, onLogout }) {
           >
             <MenuIcon />
           </button>
+          <button
+            type="button"
+            className="icon-btn collapse-trigger"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+            title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+          >
+            <PanelLeftIcon />
+          </button>
           <nav className="crumbs" aria-label="Breadcrumb">
             <span>Grade Tracker</span>
             <span className="crumb-sep" aria-hidden="true">
@@ -140,6 +172,15 @@ export default function Dashboard({ user, onUserChange, onLogout }) {
             </span>
             <span className="crumb-current">{current.label}</span>
           </nav>
+          <button
+            type="button"
+            className="icon-btn theme-trigger"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
+            title={theme === 'dark' ? 'Chế độ sáng' : 'Chế độ tối'}
+          >
+            {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+          </button>
         </header>
 
         <main className="dash-content">

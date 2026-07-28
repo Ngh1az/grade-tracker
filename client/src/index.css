@@ -6,7 +6,8 @@
  *  - Không gradient khí quyển, không tô lavender làm nền card.
  *  - Display tracking âm mạnh, weight chỉ 400/500/600.
  *  - Radius: 4px chip · 8px button+input · 12px card.
- *  - Dark-only (spec không ship light mode).
+ * Spec gốc là dark-only (marketing site), nhưng đây là product UI, không phải trang marketing —
+ * light mode dưới đây đảo ngược đúng thang surface đó (giữ accent, hairline, bán kính, tracking).
  * Màu dot điểm dựa trên palette nhãn in-product của Linear (mục Known Gaps), giới hạn 3 mức.
  */
 
@@ -51,6 +52,31 @@
   color-scheme: dark;
 }
 
+/* Light: đảo thang surface (canvas sáng nhất → surface tối dần), chữ đảo ngược độ tương phản.
+   Giữ nguyên accent/hairline-strong/bán kính/spacing — chỉ đổi độ sáng của nền và chữ. */
+:root[data-theme='light'] {
+  --primary-hover: #4d5abd;
+  --primary-focus: #7078d6;
+
+  --canvas: #ffffff;
+  --surface-1: #f7f7f8;
+  --surface-2: #eeeef0;
+  --surface-3: #e4e5e8;
+  --hairline: #e3e4e7;
+  --hairline-strong: #cfd0d5;
+
+  --ink: #131316;
+  --ink-muted: #45464b;
+  --ink-subtle: #71727a;
+  --ink-tertiary: #93949c;
+
+  --success: #17874a;
+  --warn: #a15c07;
+  --danger: #c62a2a;
+
+  color-scheme: light;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -85,6 +111,7 @@ body {
   flex-direction: column;
   background: var(--surface-1);
   border-right: 1px solid var(--hairline);
+  transition: width 0.15s ease;
 }
 
 .sidebar-header {
@@ -259,11 +286,51 @@ body {
   display: none;
 }
 
+.theme-trigger {
+  margin-left: auto;
+}
+
+/* ---------- Sidebar thu gọn (chỉ áp dụng ở desktop — mobile dùng drawer riêng) ---------- */
+
+@media (min-width: 769px) {
+  .dash.is-collapsed {
+    --sidebar-w: 60px;
+  }
+}
+
+.dash.is-collapsed .sidebar-brand-text,
+.dash.is-collapsed .sidebar-group-label,
+.dash.is-collapsed .sidebar-item .label,
+.dash.is-collapsed .sidebar-user-mail {
+  display: none;
+}
+
+.dash.is-collapsed .sidebar-header {
+  justify-content: center;
+  padding: 0;
+}
+
+.dash.is-collapsed .sidebar-item {
+  justify-content: center;
+  padding: 6px;
+}
+
+.dash.is-collapsed .sidebar-footer {
+  flex-direction: column;
+  gap: var(--sp-xs);
+}
+
+.dash.is-collapsed .sidebar-user {
+  justify-content: center;
+  padding-left: 0;
+}
+
 /* ---------- Vùng nội dung ---------- */
 
 .dash-main {
   margin-left: var(--sidebar-w);
   min-height: 100vh;
+  transition: margin-left 0.15s ease;
 }
 
 .dash-header {
@@ -275,7 +342,7 @@ body {
   gap: var(--sp-xs);
   height: 56px;
   padding: 0 var(--sp-lg);
-  background: rgba(1, 1, 2, 0.85);
+  background: color-mix(in srgb, var(--canvas) 85%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--hairline);
 }
@@ -1025,6 +1092,11 @@ td.num {
   .nav-close,
   .nav-trigger {
     display: grid;
+  }
+
+  /* Thu gọn không có nghĩa ở drawer mobile — chỉ nút mở/đóng mới cần */
+  .collapse-trigger {
+    display: none;
   }
 
   .dash.nav-open .sidebar-scrim {
