@@ -142,6 +142,14 @@ code lỗi chứ không phải chỉ chạy cho có."
 
 "Em đổi kết quả mong đợi thành một con số sai hẳn."
 
+*[Mở thêm 1 file UI, ví dụ đổi 1 chữ tiêu đề nào đó — làm trong CÙNG
+commit với test hỏng, để lát refresh web mà không thấy chữ này thì chắc
+chắn chứng minh được bản mới chưa hề lên production, không phải chỉ là
+"em không để ý"]*
+
+"Em tranh thủ đổi luôn 1 chữ trên giao diện trong cùng lần commit này —
+để lát mình có cái để kiểm chứng bằng mắt là web có đổi hay không."
+
 *[Push: `git add -A`, `git commit -m "demo: cố ý làm hỏng test"`, `git push origin main`]*
 
 "Commit, push."
@@ -153,22 +161,27 @@ bị bỏ qua luôn vì phụ thuộc vào test."
 
 *[Sang tab web, F5]*
 
-"Refresh lại web — vẫn là bản cũ, không có gì thay đổi. Code lỗi không
-hề lên được production."
+"Refresh lại web — [chỉ đúng chỗ đáng lẽ phải đổi chữ] — chữ em vừa sửa
+không hề xuất hiện, vẫn là bản cũ y hệt lúc nãy. Đây là bằng chứng chứ
+không phải em đoán — nếu deploy lỡ chạy thì chữ này đã lên rồi."
 
 *[Sang Discord]*
 
 "Discord báo lỗi ngay — [đọc to nội dung, click vào link log] — kèm
 link dẫn thẳng tới log của lần chạy đó để xem chi tiết."
 
-*[Quay lại VS Code, sửa 999 về lại 3.2]*
+*[Quay lại VS Code, sửa 999 về lại 3.2, có thể giữ nguyên chữ UI vừa đổi
+vì giờ test đã đúng lại, push sẽ cho lên production luôn]*
 
 *[Push: `git add -A`, `git commit -m "fix: revert giá trị test demo"`,
 `git push origin main`]*
 
-"Em sửa lại cho đúng và push lần nữa để repo sạch."
+"Em sửa lại test cho đúng và push lần nữa."
 
-*[Đợi pipeline xanh lại — đoạn chờ này có thể cắt khi dựng video]*
+*[Đợi pipeline xanh lại, F5 web — giờ chữ vừa đổi mới thật sự lên]*
+
+"Và giờ pipeline xanh, chữ đó mới lên web thật — càng rõ ràng hơn là lúc
+nãy web chưa hề đổi."
 
 ---
 
