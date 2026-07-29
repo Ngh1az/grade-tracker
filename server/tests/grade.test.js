@@ -47,7 +47,7 @@ describe('calculateGPA — bậc đại học (thang 4, theo tín chỉ)', () =>
       { credits: 3, grade: 9 },
       { credits: 2, grade: 6 },
     ];
-    expect(calculateGPA(subjects, LEVEL_UNIVERSITY)).toBe(999);
+    expect(calculateGPA(subjects, LEVEL_UNIVERSITY)).toBe(3.2);
   });
 
   test('môn nhiều tín chỉ ảnh hưởng GPA nhiều hơn', () => {
