@@ -1042,6 +1042,23 @@ td.num {
   font-variant-numeric: tabular-nums;
 }
 
+.sort-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sort-head:hover {
+  color: var(--ink);
+}
+
 .grade-dot {
   width: 7px;
   height: 7px;

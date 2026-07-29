@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createSubject, updateSubject, deleteSubject } from '../api.js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,6 +74,14 @@ function gradeLevel(grade) {
   return 'g-low';
 }
 
+const ALL = '__all__';
+const PAGE_SIZE = 10;
+
+function sortIcon(active, dir) {
+  if (!active) return <ArrowUpDown className="size-3.5 opacity-40" />;
+  return dir === 'asc' ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />;
+}
+
 export default function SubjectsPanel({ data, level, loading, reload }) {
   const usesCredits = level === 'dai-hoc';
   const { subjects } = data;
@@ -82,6 +91,64 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const [search, setSearch] = useState('');
+  const [semesterFilter, setSemesterFilter] = useState(ALL);
+  const [yearFilter, setYearFilter] = useState(ALL);
+  const [sortKey, setSortKey] = useState(null);
+  const [sortDir, setSortDir] = useState('asc');
+  const [page, setPage] = useState(1);
+
+  const semesterChoices = useMemo(
+    () => [...new Set(subjects.map((s) => s.semester).filter(Boolean))].sort(),
+    [subjects],
+  );
+  const yearChoices = useMemo(
+    () => [...new Set(subjects.map((s) => s.academicYear).filter(Boolean))].sort(),
+    [subjects],
+  );
+
+  function toggleSort(key) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  }
+
+  const visibleSubjects = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = subjects.filter((s) => {
+      if (q && !s.name.toLowerCase().includes(q)) return false;
+      if (semesterFilter !== ALL && s.semester !== semesterFilter) return false;
+      if (usesCredits && yearFilter !== ALL && s.academicYear !== yearFilter) return false;
+      return true;
+    });
+    if (sortKey) {
+      list = [...list].sort((a, b) => {
+        const av = a[sortKey];
+        const bv = b[sortKey];
+        const cmp =
+          typeof av === 'number' && typeof bv === 'number'
+            ? av - bv
+            : String(av ?? '').localeCompare(String(bv ?? ''), 'vi');
+        return sortDir === 'asc' ? cmp : -cmp;
+      });
+    }
+    return list;
+  }, [subjects, search, semesterFilter, yearFilter, usesCredits, sortKey, sortDir]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, semesterFilter, yearFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleSubjects.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedSubjects = visibleSubjects.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   function resetForm() {
     setForm(EMPTY_FORM);
@@ -279,11 +346,67 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
           <CardTitle>Danh sách môn học</CardTitle>
           {!loading && subjects.length > 0 && (
             <CardAction>
-              <Badge variant="secondary">{subjects.length} môn</Badge>
+              <Badge variant="secondary">
+                {visibleSubjects.length === subjects.length
+                  ? `${subjects.length} môn`
+                  : `${visibleSubjects.length}/${subjects.length} môn`}
+              </Badge>
             </CardAction>
           )}
         </CardHeader>
         <CardContent>
+          {!loading && subjects.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm theo tên môn…"
+                className="max-w-64"
+              />
+              <Select value={semesterFilter} onValueChange={setSemesterFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Học kỳ" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>Tất cả học kỳ</SelectItem>
+                  {semesterChoices.map((sem) => (
+                    <SelectItem key={sem} value={sem}>
+                      {sem}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {usesCredits && (
+                <Select value={yearFilter} onValueChange={setYearFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Năm học" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>Tất cả năm học</SelectItem>
+                    {yearChoices.map((y) => (
+                      <SelectItem key={y} value={y}>
+                        {y}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {(search || semesterFilter !== ALL || yearFilter !== ALL) && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearch('');
+                    setSemesterFilter(ALL);
+                    setYearFilter(ALL);
+                  }}
+                >
+                  Xoá lọc
+                </Button>
+              )}
+            </div>
+          )}
           {loading ? (
             <div className="flex flex-col gap-3" aria-live="polite" aria-busy="true">
               <Skeleton className="h-4 w-full" />
@@ -296,23 +419,51 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
               <p>Chưa có môn học nào.</p>
               <p>Thêm môn đầu tiên bằng biểu mẫu ở trên.</p>
             </div>
+          ) : visibleSubjects.length === 0 ? (
+            <div className="empty">
+              <p>Không tìm thấy môn nào khớp bộ lọc.</p>
+            </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>TÊN MÔN</TableHead>
-                  {usesCredits && <TableHead>SỐ TÍN</TableHead>}
-                  <TableHead>{usesCredits ? 'ĐIỂM HỆ 10' : 'ĐIỂM'}</TableHead>
+                  <TableHead>
+                    <button type="button" className="sort-head" onClick={() => toggleSort('name')}>
+                      TÊN MÔN {sortIcon(sortKey === 'name', sortDir)}
+                    </button>
+                  </TableHead>
+                  {usesCredits && (
+                    <TableHead>
+                      <button type="button" className="sort-head" onClick={() => toggleSort('credits')}>
+                        SỐ TÍN {sortIcon(sortKey === 'credits', sortDir)}
+                      </button>
+                    </TableHead>
+                  )}
+                  <TableHead>
+                    <button type="button" className="sort-head" onClick={() => toggleSort('grade')}>
+                      {usesCredits ? 'ĐIỂM HỆ 10' : 'ĐIỂM'} {sortIcon(sortKey === 'grade', sortDir)}
+                    </button>
+                  </TableHead>
                   {usesCredits && <TableHead>ĐIỂM HỆ 4</TableHead>}
                   {usesCredits && <TableHead>ĐIỂM CHỮ</TableHead>}
                   {usesCredits && <TableHead>XẾP LOẠI</TableHead>}
-                  <TableHead>HỌC KỲ</TableHead>
-                  {usesCredits && <TableHead>NĂM HỌC</TableHead>}
+                  <TableHead>
+                    <button type="button" className="sort-head" onClick={() => toggleSort('semester')}>
+                      HỌC KỲ {sortIcon(sortKey === 'semester', sortDir)}
+                    </button>
+                  </TableHead>
+                  {usesCredits && (
+                    <TableHead>
+                      <button type="button" className="sort-head" onClick={() => toggleSort('academicYear')}>
+                        NĂM HỌC {sortIcon(sortKey === 'academicYear', sortDir)}
+                      </button>
+                    </TableHead>
+                  )}
                   <TableHead className="text-right">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {subjects.map((s) => (
+                {pagedSubjects.map((s) => (
                   <TableRow key={s._id} className={editingId === s._id ? 'is-editing' : ''}>
                     <TableCell className="name font-medium text-foreground">{s.name}</TableCell>
                     {usesCredits && <TableCell className="num">{s.credits}</TableCell>}
@@ -361,6 +512,35 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
                 ))}
               </TableBody>
             </Table>
+          )}
+          {!loading && visibleSubjects.length > PAGE_SIZE && (
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+              <span className="text-sm text-muted-foreground">
+                Trang {currentPage}/{totalPages}
+              </span>
+              <div className="flex gap-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft className="size-4" />
+                  Trước
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Sau
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
