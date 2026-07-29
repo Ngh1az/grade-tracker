@@ -62,8 +62,16 @@ const EMPTY_DATA = {
   semesters: [],
 };
 
+const NAV_IDS = NAV.map((n) => n.id);
+
+// Đọc tab đang mở từ URL hash lúc load, để F5 không bị bật về lại Tổng quan.
+function getInitialView() {
+  const hash = window.location.hash.slice(1);
+  return NAV_IDS.includes(hash) ? hash : 'overview';
+}
+
 export default function Dashboard({ user, onUserChange, onLogout }) {
-  const [view, setView] = useState('overview');
+  const [view, setView] = useState(getInitialView);
   const [theme, setTheme] = useState(getTheme);
   const [data, setData] = useState(EMPTY_DATA);
   const [loading, setLoading] = useState(true);
@@ -86,6 +94,10 @@ export default function Dashboard({ user, onUserChange, onLogout }) {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useEffect(() => {
+    window.history.replaceState(null, '', `#${view}`);
+  }, [view]);
 
   function toggleTheme() {
     const next = theme === 'dark' ? 'light' : 'dark';
