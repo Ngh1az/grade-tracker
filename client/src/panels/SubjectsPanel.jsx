@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowUpDown, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import { createSubject, updateSubject, deleteSubject } from '../api.js';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/select';
 import {
   AlertDialog,
-  AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -27,6 +26,12 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 const EMPTY_FORM = { name: '', credits: '', grade: '', semester: '', academicYear: '' };
 const YEAR_RE = /^\d{4}$/;
@@ -91,6 +96,7 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const [search, setSearch] = useState('');
   const [semesterFilter, setSemesterFilter] = useState(ALL);
@@ -480,33 +486,22 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
                     <TableCell className="sem">{s.semester}</TableCell>
                     {usesCredits && <TableCell className="sem">{s.academicYear || '—'}</TableCell>}
                     <TableCell className="text-right">
-                      <div className="row-actions">
-                        <Button type="button" variant="ghost" size="sm" onClick={() => handleEdit(s)}>
-                          Sửa
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger render={<Button type="button" variant="ghost" size="sm" className="text-destructive hover:text-destructive" />}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={<Button type="button" variant="ghost" size="icon-sm" />}
+                        >
+                          <MoreVertical className="size-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(s)}>Sửa</DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setDeleteTarget(s)}
+                          >
                             Xoá
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Xoá môn "{s.name}"?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Không thể hoàn tác. Điểm và mọi dữ liệu liên quan tới môn này sẽ mất.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Huỷ</AlertDialogCancel>
-                              <AlertDialogAction
-                                variant="destructive"
-                                onClick={() => handleDelete(s)}
-                              >
-                                Xoá môn
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -544,6 +539,32 @@ export default function SubjectsPanel({ data, level, loading, reload }) {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xoá môn "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Không thể hoàn tác. Điểm và mọi dữ liệu liên quan tới môn này sẽ mất.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Huỷ</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                handleDelete(deleteTarget);
+                setDeleteTarget(null);
+              }}
+            >
+              Xoá môn
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
