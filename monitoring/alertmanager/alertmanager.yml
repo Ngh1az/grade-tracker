@@ -14,6 +14,9 @@ receivers:
     # (ví dụ: envsubst < alertmanager.yml.tpl > alertmanager.yml khi deploy).
     discord_configs:
       - webhook_url: 'DISCORD_WEBHOOK_URL_PLACEHOLDER'
-        title: '{{ .CommonAnnotations.summary }}'
-        message: '{{ .CommonAnnotations.description }}'
+        # summary/description trong alert-rules.yml chỉ đúng lúc đang FIRING (mô tả
+        # tình trạng lỗi) — nếu dùng y chang cho tin RESOLVED thì tin báo "đã hết sự cố"
+        # vẫn hiện chữ "không phản hồi/vượt ngưỡng", gây hiểu lầm là còn đang lỗi.
+        title: '{{ if eq .Status "firing" }}🔴 {{ .CommonAnnotations.summary }}{{ else }}✅ Đã khắc phục: {{ .CommonLabels.alertname }}{{ end }}'
+        message: '{{ if eq .Status "firing" }}{{ .CommonAnnotations.description }}{{ else }}Hệ thống đã trở lại bình thường, không cần thao tác gì thêm.{{ end }}'
         send_resolved: true
