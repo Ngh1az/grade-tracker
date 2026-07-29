@@ -10,7 +10,7 @@ sẵn trong `~/.bashrc` trên VPS.
 
 ---
 
-## Cảnh 0 — Mở đầu
+## Cảnh 0 — Mở đầu 
 
 *[Đứng ở trang chủ grades.nghiatech.click, đã đăng nhập, chưa click gì]*
 
@@ -86,8 +86,7 @@ bộ nhớ."
 
 "Em sửa một chỗ nhỏ trên giao diện để lát mình thấy web đổi thật sự."
 
-*[Terminal, gõ lần lượt: `git add -A`, `git commit -m "demo: đổi UI nhỏ
-để quay video"`, `git push origin main`]*
+*[Terminal, gõ lần lượt: `git add -A`, `git commit -m "demo: đổi UI nhỏ để quay video"`, `git push origin main`]*
 
 "Commit và push thẳng lên nhánh main."
 
@@ -143,8 +142,7 @@ code lỗi chứ không phải chỉ chạy cho có."
 
 "Em đổi kết quả mong đợi thành một con số sai hẳn."
 
-*[Push: `git add -A`, `git commit -m "demo: cố ý làm hỏng test"`, `git
-push origin main`]*
+*[Push: `git add -A`, `git commit -m "demo: cố ý làm hỏng test"`, `git push origin main`]*
 
 "Commit, push."
 
@@ -253,6 +251,6 @@ xem."
 
 - [ ] Đủ 4 cảnh bắt buộc, có thoại rõ ràng, không im lặng click chuột
 - [ ] Không lộ password thật, webhook URL đầy đủ, SSH private key, Mongo
-      URI đầy đủ, nội dung file `.env`
+  URI đầy đủ, nội dung file `.env`
 - [ ] Tổng thời lượng 5-10 phút
 - [ ] Upload xong, mở thử link ở trình duyệt ẩn danh để chắc mở được
