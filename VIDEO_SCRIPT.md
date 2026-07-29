@@ -229,6 +229,27 @@ phải đoán."
 
 ---
 
+## Cảnh 4.5 — Điểm cộng vận hành nâng cao (tuỳ chọn, ~45s)
+
+Không bắt buộc — bỏ qua nếu video đã gần 9-10 phút. Có thì thêm điểm
+cộng, giảng viên đỡ phải hỏi vấn đáp hết mấy cái này.
+
+*[Vẫn ở terminal SSH VPS, gõ `ls -lh /var/backups/grade-tracker/`]*
+
+"Đây là backup MongoDB — cron chạy mỗi ngày lúc 2 giờ sáng, nén gzip,
+giữ 7 bản gần nhất, tự xoá bản cũ hơn."
+
+*[Gõ `grep PasswordAuthentication /etc/ssh/sshd_config`]*
+
+"SSH chỉ vào được bằng key, đã tắt đăng nhập bằng mật khẩu."
+
+*[Gõ `cat /etc/nginx/conf.d/rate-limit-grade-tracker.conf`]*
+
+"Nginx có giới hạn 10 request/giây cho `/api`, chặn được spam hoặc bot
+dò tự động."
+
+---
+
 ## Cảnh 5 — Kết
 
 "Tóm lại, hệ thống của em có đủ năm phần: ứng dụng CRUD thật với

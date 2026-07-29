@@ -51,7 +51,7 @@ export default function OverviewPanel({ data, level, loading, onGoSubjects }) {
   return (
     <div className="panel">
       <div className="panel-head">
-        <h1>Tổng quan</h1>
+        <h1>Tổng quan 123</h1>
       </div>
 
       <div className="stats">
